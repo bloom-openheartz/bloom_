@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bloom(Open Heart) — Radical Self-Acceptance</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -866,17 +867,38 @@ body.intro-locked{overflow:hidden;height:100vh;}
 </style>
 </head>
 <body>
-  <body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <div id="g_id_onload"
-       data-client_id="266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com"
-       data-context="signin"
-       data-ux_mode="popup"
-       data-callback="handleCredentialResponse">
-  </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwnQgL4M3fQF6iWd_9GdgYq-jk9on6Tq4",
+    authDomain: "bloom-502919.firebaseapp.com",
+    projectId: "bloom-502919",
+    storageBucket: "bloom-502919.firebasestorage.app",
+    messagingSenderId: "694570223930",
+    appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
+    measurementId: "G-X71P8BWN5R"
+  };
 
-  <div class="g_id_signin" data-type="standard"></div>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
+  // Modules don't share scope with your classic <script> below, so expose what it needs:
+  window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential };
+
+  window.handleCredentialResponse = async function(response){
+    try{
+      const credential = GoogleAuthProvider.credential(response.credential);
+      const result = await signInWithCredential(auth, credential);
+      const u = result.user;
+      window.onGoogleSignedIn && window.onGoogleSignedIn({ name: u.displayName, email: u.email, uid: u.uid });
+    }catch(err){ console.error("Google sign-in failed:", err); }
+
+  };
+</script>
 </body>
 <div class="scroll-progress" id="scrollProgress"></div>
 <div class="intro-overlay" id="introOverlay">
@@ -1904,6 +1926,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
 <div class="toast" id="toast"></div>
 
 <script>
+    
 document.getElementById('yearNow').textContent = new Date().getFullYear();
 const DB = {
   get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
@@ -1924,6 +1947,21 @@ function forceCloseIntro(){
 
 let currentUser = DB.get('bloom_currentUser', null);
 let users = DB.get('bloom_users', {});
+
+if (window.google?.accounts?.id) {
+  google.accounts.id.initialize({
+    client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+    callback: (resp) => window.handleCredentialResponse?.(resp)
+  });
+}
+window.onGoogleSignedIn = function({name, email, uid}){
+  if(!users[email]){ users[email] = {name, email, password:'google-oauth'}; DB.set('bloom_users', users); }
+  currentUser = {name, email, uid};
+  DB.set('bloom_currentUser', currentUser);
+  renderNavRight();
+  toast('Signed in with Google ✓');
+  navigate('home');
+};
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -2117,18 +2155,24 @@ function handleSignin(){
   navigate('home');
 }
 function googleAuthSim(){
-  toast('Connecting to Google...');
-  setTimeout(()=>{
-    const name = 'Google User';
-    const email = 'google.user@gmail.com';
-    if(!users[email]) { users[email]={name,email,password:'oauth'}; DB.set('bloom_users', users); }
-    currentUser = {name, email};
-    DB.set('bloom_currentUser', currentUser);
-    renderNavRight();
-    toast('Signed in with Google ✓');
-    navigate('home');
-  }, 900);
+  if(!window.google?.accounts?.id){ toast('Google sign-in is still loading — try again in a second.'); return; }
+  const tempDiv = document.createElement('div');
+  tempDiv.style.position='fixed'; tempDiv.style.left='-9999px';
+  document.body.appendChild(tempDiv);
+  google.accounts.id.renderButton(tempDiv, { type:'standard', theme:'outline', size:'large' });
+  setTimeout(()=>{ const btn = tempDiv.querySelector('div[role=button]'); if(btn) btn.click(); tempDiv.remove(); }, 50);
 }
+function initGoogleAuthWhenReady(){
+  if (window.google?.accounts?.id) {
+    google.accounts.id.initialize({
+      client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+      callback: (resp) => window.handleCredentialResponse?.(resp)
+    });
+  } else {
+    setTimeout(initGoogleAuthWhenReady, 200);
+  }
+}
+initGoogleAuthWhenReady();
 function signOut(){
   currentUser = null;
   DB.set('bloom_currentUser', null);
@@ -2602,12 +2646,7 @@ function seedRoomMsgs(room){
   ];
 }
 function persistChat(){ LS.set('bloom_chatState', chatState); }
-function initChatIfNeeded(){
-  const container = document.getElementById('chatRoomContainer');
-  if(!container) return;
-  container.innerHTML = pageChat();
-  renderChatFeed();
-}
+
 function pageChat(){
   return `
   <div class="chat-wrap reveal in">
@@ -2620,10 +2659,17 @@ function pageChat(){
       <div class="chat-feed" id="chatFeed"></div>
       <div class="typing-indicator" id="typingIndicator" style="display:none;">Someone is typing...</div>
       <div class="chat-input">
+        ${currentUser ? `
         <button onclick="insertEmoji('🌿')" class="btn btn-ghost" style="padding:8px 10px;">🌿</button>
         <button onclick="insertEmoji('💛')" class="btn btn-ghost" style="padding:8px 10px;">💛</button>
         <input id="chatInput" placeholder="Say something kind or honest..." onkeydown="if(event.key==='Enter') sendMsg()">
         <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+        ` : `
+        <div style="width:100%;text-align:center;padding:6px 0;">
+          <span style="font-size:.85rem;color:#8a8072">Sign in to join the conversation</span>
+          <button class="btn btn-primary" style="margin-left:10px;padding:8px 16px" onclick="navigate('auth');switchAuthTab('signin')">Sign in</button>
+        </div>
+        `}
       </div>
     </div>
     <div class="chat-online">
@@ -2632,7 +2678,43 @@ function pageChat(){
     </div>
   </div>`;
 }
+let unsubscribeRoom = null;
+function initChatIfNeeded(){
+  const container = document.getElementById('chatRoomContainer');
+  if(!container) return;
+  container.innerHTML = pageChat();
+  subscribeToRoom(chatState.room);
+}
+function subscribeToRoom(room){
+  if(unsubscribeRoom) unsubscribeRoom();
+  const { db, collection, query, orderBy, onSnapshot } = window.BloomFB;
+  const q = query(collection(db, 'rooms', room, 'messages'), orderBy('createdAt'));
+  unsubscribeRoom = onSnapshot(q, (snap)=>{
+    const feed = document.getElementById('chatFeed');
+    if(!feed) return;
+    feed.innerHTML = snap.docs.map(d=>{
+      const m = d.data();
+      const mine = currentUser && m.name === currentUser.name;
+      return `<div class="msg ${mine?'me':''}"><div class="meta">${escapeHtml(m.name||'Guest')}</div><div>${escapeHtml(m.text||'')}</div></div>`;
+    }).join('');
+    feed.scrollTop = feed.scrollHeight;
+  });
+}
 function switchRoom(r){ chatState.room=r; persistChat(); initChatIfNeeded(); }
+async function sendMsg(){
+  if(!currentUser){ toast('Sign in to send a message'); navigate('auth'); switchAuthTab('signin'); return; }
+  const inp = document.getElementById('chatInput');
+  const text = inp ? inp.value.trim() : '';
+  if(!text) return;
+  const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
+  await addDoc(collection(db, 'rooms', chatState.room, 'messages'), {
+    name: currentUser ? currentUser.name : 'Guest',
+    text,
+    createdAt: serverTimestamp()
+  });
+  inp.value = '';
+}
+
 let blockedUsers = DB.get('bloom_blockedUsers', []);
 function isBlocked(name){ return blockedUsers.includes(name); }
 function blockUser(name){
@@ -2663,64 +2745,8 @@ function msgMenu(id, name, text, feedFn){
     <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="closeModal('premiumModal')">Cancel</button>
   `);
 }
-function renderChatFeed(){
-  const feed = document.getElementById('chatFeed');
-  if(!feed) return;
-  const msgs = (chatState.messages[chatState.room] || []).filter(m=>!isBlocked(m.name));
-  feed.innerHTML = msgs.map(m=>`
-    <div class="msg ${m.name==='You'?'me':''}">
-      <div class="meta">${escapeHtml(m.name)} ${m.name!=='You' ? `<span style="cursor:pointer;opacity:.55;margin-left:6px" onclick="msgMenu(${m.id},'${m.name}',&quot;${escapeHtml(m.text)}&quot;)" title="Report or block">⋯</span>` : ''}</div>
-      <div>${escapeHtml(m.text)}</div>
-      <div class="reactions">
-        ${['💛','🙌','🌿'].map(e=>`<span onclick="react(${m.id},'${e}')">${e} ${m.reactions && m.reactions[e] ? m.reactions[e] : ''}</span>`).join('')}
-      </div>
-    </div>`).join('');
-  feed.scrollTop = feed.scrollHeight;
-}
-function react(id, emoji){
-  const msgs = chatState.messages[chatState.room] || [];
-  const m = msgs.find(x=>x.id===id);
-  if(!m) return;
-  m.reactions[emoji] = (m.reactions[emoji]||0)+1;
-  persistChat(); renderChatFeed();
-}
 function insertEmoji(e){ const inp = document.getElementById('chatInput'); if(inp){ inp.value += e; inp.focus(); } }
-function sendMsg(){
-  const inp = document.getElementById('chatInput');
-  const text = inp ? inp.value.trim() : '';
-  if(!text) return;
-  const msgs = chatState.messages[chatState.room] || [];
-  const id = (msgs.reduce((m,x)=>Math.max(m,x.id),0))+1;
-  msgs.push({id, name:'You', text, reactions:{}});
-  inp.value='';
-  persistChat(); renderChatFeed();
-  simulateTyping();
-}
-function simulateTyping(){
-  const ind = document.getElementById('typingIndicator');
-  if(!ind) return;
-  const who = MEMBERS[Math.floor(Math.random()*MEMBERS.length)];
-  ind.textContent = `${who} is typing...`;
-  ind.style.display='block';
-  setTimeout(()=>{
-    ind.style.display='none';
-    const msgs = chatState.messages[chatState.room] || [];
-    const replies = ['That really resonates with me.','Thank you for sharing that.','You are not alone in this at all.','Sending you so much warmth right now.','That took courage to say 💛'];
-    const id = (msgs.reduce((m,x)=>Math.max(m,x.id),0))+1;
-    msgs.push({id, name:who, text: replies[Math.floor(Math.random()*replies.length)], reactions:{}});
-    persistChat(); renderChatFeed();
-  }, 1400);
-}
-setInterval(()=>{
-  const chatSection = document.getElementById('page-chat');
-  if(!chatSection || !chatSection.classList.contains('active')) return;
-  const msgs = chatState.messages[chatState.room] || [];
-  const who = MEMBERS[Math.floor(Math.random()*MEMBERS.length)];
-  const lines = ['Just checking in on everyone here 🌿','Small win today: I drank enough water.','Anyone else feel lighter after journaling?','Grateful for this space honestly.'];
-  const id = (msgs.reduce((m,x)=>Math.max(m,x.id),0))+1;
-  msgs.push({id, name:who, text:lines[Math.floor(Math.random()*lines.length)], reactions:{}});
-  persistChat(); renderChatFeed();
-}, 22000);
+
 function openDM(name){
   showModal(`
     <h3>DM · ${name}</h3>
