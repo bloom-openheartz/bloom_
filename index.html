@@ -2048,6 +2048,7 @@ function navigate(page, skipSave){
   if(page==='journal') { initJournal(); }
   if(page==='kindness') { initKindness(); }
   if(page==='musicroom') { initMusicRoom(); }
+  if(page==='auth') { renderGoogleButton(); }
   triggerReveal();
 }
 
@@ -2165,7 +2166,6 @@ function handleSignin(){
     setTimeout(renderGoogleButton, 200);
   }
 }
-renderGoogleButton();
 function initGoogleAuthWhenReady(){
   if (window.google?.accounts?.id) {
    google.accounts.id.initialize({
@@ -4499,6 +4499,7 @@ function init(){
   const noneBtn = document.getElementById('soundNone');
   if(noneBtn) noneBtn.classList.add('active');
   runIntroMascot();
+  renderGoogleButton();
   setTimeout(()=>{
     const overlay = document.getElementById('introOverlay');
     if(overlay && document.body.classList.contains('intro-locked')){
