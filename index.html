@@ -871,7 +871,8 @@ body.intro-locked{overflow:hidden;height:100vh;}
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 const firebaseConfig = {
   apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
   authDomain: "bloom-502919.firebaseapp.com",
@@ -883,6 +884,7 @@ const firebaseConfig = {
 };
 
   const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);  
   const auth = getAuth(app);
   const db = getFirestore(app);
 
