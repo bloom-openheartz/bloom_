@@ -1946,7 +1946,7 @@ let users = DB.get('bloom_users', {});
 
 if (window.google?.accounts?.id) {
   google.accounts.id.initialize({
-    client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+    client_id: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com",
     callback: (resp) => window.handleCredentialResponse?.(resp)
   });
 }
@@ -2153,7 +2153,7 @@ function handleSignin(){
 }function renderGoogleButton(){
   if (window.google && window.google.accounts && window.google.accounts.id) {
     google.accounts.id.initialize({
-      client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+      client_id: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com",
       callback: (resp) => window.handleCredentialResponse?.(resp),
       use_fedcm_for_prompt: true
     });
@@ -2168,7 +2168,7 @@ function handleSignin(){
 function initGoogleAuthWhenReady(){
   if (window.google?.accounts?.id) {
    google.accounts.id.initialize({
-    client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+    client_id: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com",
     callback: (resp) => window.handleCredentialResponse?.(resp),
     use_fedcm_for_prompt: true
 });
