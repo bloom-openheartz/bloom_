@@ -872,16 +872,15 @@ body.intro-locked{overflow:hidden;height:100vh;}
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDwnQgL4M3fQF6iWd_9GdgYq-jk9on6Tq4",
-    authDomain: "bloom-502919.firebaseapp.com",
-    projectId: "bloom-502919",
-    storageBucket: "bloom-502919.firebasestorage.app",
-    messagingSenderId: "694570223930",
-    appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
-    measurementId: "G-X71P8BWN5R"
-  };
-
+ const firebaseConfig = {
+  apiKey: "AIzaSyDaffY8_ThxIo3GriJU6kgRCPkKZVQppsI",
+  authDomain: "bloom-502919.firebaseapp.com",
+  projectId: "bloom-502919",
+  storageBucket: "bloom-502919.firebasestorage.app",
+  messagingSenderId: "694570223930",
+  appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
+  measurementId: "G-X71P8BWN5R"
+};
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
