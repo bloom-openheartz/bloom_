@@ -2150,22 +2150,17 @@ function handleSignin(){
   renderNavRight();
   toast('Welcome back, '+u.name.split(' ')[0]+' ✨');
   navigate('home');
-}
-google.accounts.id.renderButton(
-  document.getElementById('googleSignInDiv'),  // ek real visible div
-  { type:'standard', theme:'outline', size:'large' }
-);
-function renderGoogleButton(){
-  if (window.google?.accounts?.id) {
+}function renderGoogleButton(){
+  if (window.google && window.google.accounts && window.google.accounts.id) {
     google.accounts.id.initialize({
       client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
       callback: (resp) => window.handleCredentialResponse?.(resp),
       use_fedcm_for_prompt: true
     });
-    google.accounts.id.renderButton(
-      document.getElementById('googleSignInDiv'),
-      { type:'standard', theme:'outline', size:'large', width: 300 }
-    );
+    const target = document.getElementById('googleSignInDiv');
+    if(target){
+      google.accounts.id.renderButton(target, { type:'standard', theme:'outline', size:'large', width: 300 });
+    }
   } else {
     setTimeout(renderGoogleButton, 200);
   }
