@@ -1287,11 +1287,8 @@ body.intro-locked{overflow:hidden;height:100vh;}
       <div class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign In</div>
       <div class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Sign Up</div>
     </div>
-    <div class="auth-body">
-      <button class="oauth-btn" onclick="googleAuthSim()">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 16.1 3 9.3 7.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.4 0 10.3-2.1 14-5.5l-6.5-5.3C29.4 35.9 26.8 37 24 37c-5.2 0-9.6-3.1-11.3-7.6l-6.6 5.1C9.2 41.4 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 3-3.2 5.5-6 7.2l6.5 5.3C39.5 37.7 45 31.5 45 24c0-1.4-.1-2.7-.4-3.5z"/></svg>
-        Continue with Google
-      </button>
+   <div class="auth-body">
+      <div id="googleSignInDiv" style="display:flex;justify-content:center;margin-bottom:20px;"></div>
       <div class="divider">or</div>
 
       <div id="signinForm">
@@ -2154,20 +2151,33 @@ function handleSignin(){
   toast('Welcome back, '+u.name.split(' ')[0]+' ✨');
   navigate('home');
 }
-function googleAuthSim(){
-  if(!window.google?.accounts?.id){ toast('Google sign-in is still loading — try again in a second.'); return; }
-  const tempDiv = document.createElement('div');
-  tempDiv.style.position='fixed'; tempDiv.style.left='-9999px';
-  document.body.appendChild(tempDiv);
-  google.accounts.id.renderButton(tempDiv, { type:'standard', theme:'outline', size:'large' });
-  setTimeout(()=>{ const btn = tempDiv.querySelector('div[role=button]'); if(btn) btn.click(); tempDiv.remove(); }, 50);
-}
-function initGoogleAuthWhenReady(){
+google.accounts.id.renderButton(
+  document.getElementById('googleSignInDiv'),  // ek real visible div
+  { type:'standard', theme:'outline', size:'large' }
+);
+function renderGoogleButton(){
   if (window.google?.accounts?.id) {
     google.accounts.id.initialize({
       client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
-      callback: (resp) => window.handleCredentialResponse?.(resp)
+      callback: (resp) => window.handleCredentialResponse?.(resp),
+      use_fedcm_for_prompt: true
     });
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInDiv'),
+      { type:'standard', theme:'outline', size:'large', width: 300 }
+    );
+  } else {
+    setTimeout(renderGoogleButton, 200);
+  }
+}
+renderGoogleButton();
+function initGoogleAuthWhenReady(){
+  if (window.google?.accounts?.id) {
+   google.accounts.id.initialize({
+    client_id: "266462093175-u649ms3fsi9v7r8gjt45tuvpco2g6tvs.apps.googleusercontent.com",
+    callback: (resp) => window.handleCredentialResponse?.(resp),
+    use_fedcm_for_prompt: true
+});
   } else {
     setTimeout(initGoogleAuthWhenReady, 200);
   }
