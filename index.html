@@ -866,25 +866,37 @@ body.intro-locked{overflow:hidden;height:100vh;}
 .contact-email{font-size:.82rem;color:#5c5142;word-break:break-all;}
 </style>
 </head>
-<body>
-<script type="module">
+<body><script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-const firebaseConfig = {
-  apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
-  authDomain: "bloom-502919.firebaseapp.com",
-  projectId: "bloom-502919",
-  storageBucket: "bloom-502919.firebasestorage.app",
-  messagingSenderId: "694570223930",
-  appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
-  measurementId: "G-X71P8BWN5R"
-};
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
+    authDomain: "bloom-502919.firebaseapp.com",
+    projectId: "bloom-502919",
+    storageBucket: "bloom-502919.firebasestorage.app",
+    messagingSenderId: "694570223930",
+    appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
+    measurementId: "G-X71P8BWN5R"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential };
+
+  window.handleCredentialResponse = async function(response){
+    try{
+      const credential = GoogleAuthProvider.credential(response.credential);
+      const result = await signInWithCredential(auth, credential);
+      const u = result.user;
+      window.onGoogleSignedIn && window.onGoogleSignedIn({ name: u.displayName, email: u.email, uid: u.uid });
+    }catch(err){ console.error("Google sign-in failed:", err); }
+  };
   // Modules don't share scope with your classic <script> below, so expose what it needs:
   window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential };
 
