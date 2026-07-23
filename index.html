@@ -1943,12 +1943,7 @@ function forceCloseIntro(){
 let currentUser = DB.get('bloom_currentUser', null);
 let users = DB.get('bloom_users', {});
 
-if (window.google?.accounts?.id) {
-  google.accounts.id.initialize({
-    client_id: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com",
-    callback: (resp) => window.handleCredentialResponse?.(resp)
-  });
-}
+
 window.onGoogleSignedIn = function({name, email, uid}){
   if(!users[email]){ users[email] = {name, email, password:'google-oauth'}; DB.set('bloom_users', users); }
   currentUser = {name, email, uid};
@@ -2163,6 +2158,8 @@ function handleSignin(){
   } else {
     setTimeout(renderGoogleButton, 200);
   }
+
+
 }
 function initGoogleAuthWhenReady(){
   if (window.google?.accounts?.id) {
