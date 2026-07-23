@@ -1170,8 +1170,8 @@ body.intro-locked{overflow:hidden;height:100vh;}
     <span class="eyebrow">a softer circle</span>
     <h1>Soft Circle 💗</h1>
     <p>A cozy, gently-themed room open to anyone — vent, celebrate, or just say hi.</p>
-    <div style="max-width:520px;margin:14px auto 0;background:var(--sage-soft);border-radius:14px;padding:12px 16px;font-size:.82rem;color:#3f5f4d;text-align:left;">
-      🛡️ This room is <strong>not identity-verified</strong> — anyone can join. Please don't share identifying details, and use the report/block button on any message that makes you uncomfortable.
+    <div style="max-width:520px;margin:14px auto 0;background:var(--sage-soft);border-radius:14px;padding:14px 16px;font-size:.82rem;color:#3f5f4d;text-align:left;">
+      🛡️ <strong>This is an open room, not a verified one.</strong> We don't check who anyone is or how old they are — anyone with an invite link can be here. Treat it like talking to strangers online: keep your name, school, city, socials, and photos of yourself out of the chat. Use ⋯ on any message to report or block.
     </div>
     <button class="btn btn-ghost" style="margin-top:14px" onclick="navigate('chat')">← Back to Chat Room</button>
   </div>
@@ -1684,7 +1684,12 @@ body.intro-locked{overflow:hidden;height:100vh;}
     <h1>Community</h1>
     <p>House rules, a direct line to send us feedback, and the people behind Bloom.</p>
   </div>
-
+<div class="feedback-card reveal" style="margin-top:20px;">
+  <h3 style="margin-bottom:14px;">Invite someone to Soft Circle</h3>
+  <p style="font-size:.85rem;color:#5c5142;margin-bottom:12px;">Generates a one-time link — send it directly to someone you know. It stops working once they use it.</p>
+  <input id="inviteForNameInput" placeholder="Who's this for? (just for your own reference)" style="width:100%;border:1.5px solid var(--petal);border-radius:12px;padding:11px 14px;margin-bottom:10px;">
+  <button class="btn btn-primary" onclick="const l=generateSoftCircleInvite(document.getElementById('inviteForNameInput').value); navigator.clipboard?.writeText(l); toast('Invite link copied — send it directly to them 💌');">Generate invite link</button>
+</div>
   <div class="section-head reveal"><h2 style="font-size:1.6rem">Community Guidelines</h2></div>
   <div class="community-guide-card reveal">
     <div class="community-guide-item"><span class="community-guide-num">01</span><div><h4>Be kind first</h4><p>Assume good intent, and extend the grace you'd want back.</p></div></div>
@@ -1890,6 +1895,15 @@ body.intro-locked{overflow:hidden;height:100vh;}
     </div>
   </div>
 </div>
+
+<section class="page" id="page-modqueue">
+  <div class="page-hero reveal">
+    <span class="eyebrow">staff only — moderation</span>
+    <h1>Reported Messages</h1>
+    <p>Review reports from the Soft Circle and act on them.</p>
+  </div>
+  <div class="community-guide-card reveal" id="modQueueList" style="max-width:780px;"></div>
+</section>
 
 <!-- onboarding -->
 <div class="onboard-overlay" id="onboardOverlay">
@@ -2791,6 +2805,18 @@ function persistGirlsChat(){ LS.set('bloom_girlsChatState', girlsChatState); }
 function renderGirlsChatPage(){
   const container = document.getElementById('girlsChatContainer');
   if(!container) return;
+  tryRedeemInviteFromUrl();
+  if(!hasSoftCircleAccess()){
+    container.innerHTML = `
+      <div style="max-width:420px;margin:0 auto;text-align:center;background:#fff;border-radius:24px;padding:36px;box-shadow:var(--shadow-soft);">
+        <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+        <h3>This room is invite-only</h3>
+        <p style="color:#5c5142;font-size:.9rem;margin:10px 0 20px;">Someone you know can send you a direct invite link, or you can enter a code below.</p>
+        <input id="inviteCodeInput" placeholder="Enter invite code" style="width:100%;border:1.5px solid var(--petal);border-radius:14px;padding:12px;margin-bottom:12px;">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="redeemInviteManually()">Enter room</button>
+      </div>`;
+    return;
+  }
   container.innerHTML = pageGirlsChat();
   renderGirlsChatFeed();
 }
@@ -2841,10 +2867,40 @@ function reactGirls(id, emoji){
   persistGirlsChat(); renderGirlsChatFeed();
 }
 function insertGirlsEmoji(e){ const inp = document.getElementById('girlsChatInput'); if(inp){ inp.value += e; inp.focus(); } }
+
+
+let girlsSendTimestamps = [];
+
+function girlsRateLimitOk(){
+  const now = Date.now();
+  girlsSendTimestamps = girlsSendTimestamps.filter(t => now - t < 30000);
+  if(girlsSendTimestamps.length >= 6){ return false; }
+  girlsSendTimestamps.push(now);
+  return true;
+}
+function containsIdentifyingPattern(text){
+  // crude phone/email/handle heuristics — not perfect, but catches common cases
+  return /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(text) || /@\w{3,}/.test(text) || /[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(text);
+}
+
 function sendGirlsMsg(){
   const inp = document.getElementById('girlsChatInput');
   const text = inp ? inp.value.trim() : '';
   if(!text) return;
+
+  if(!girlsRateLimitOk()){
+    toast("You're sending messages quickly — take a breath, one sec ⏳");
+    return;
+  }
+  if(containsProfanity(text)){
+    toast("Let's keep this space kind — try rephrasing that.");
+    return;
+  }
+  if(containsIdentifyingPattern(text) || containsLink(text)){
+    toast("For your safety, links, numbers, and handles aren't allowed here.");
+    return;
+  }
+
   const msgs = girlsChatState.messages[girlsChatState.room] || [];
   const id = (msgs.reduce((m,x)=>Math.max(m,x.id),0))+1;
   msgs.push({id, name:'You', text, reactions:{}});
@@ -3359,7 +3415,71 @@ function renderContactCards(){
       <div class="contact-email">${escapeHtml(c.email)}</div>
     </div>`).join('');
 }
+//modqueue
+function renderModQueue(){
+  const PAGES = ['home','affirmations','wall','shift','chat','girlschat','calm','games','journal','kindness','safety','auth','musicroom','community','modqueue'];
+  const reports = DB.get('bloom_reports', []);
+  const list = document.getElementById('modQueueList');
+  if(!list) return;
+  if(!reports.length){ list.innerHTML = '<p style="padding:20px;color:#8a8072">No open reports.</p>'; return; }
+  list.innerHTML = reports.map((r,i)=>`
+    <div class="community-guide-item">
+      <div style="flex:1;">
+        <h4>${escapeHtml(r.name)}</h4>
+        <p>"${escapeHtml(r.text)}" — ${timeAgo(r.time)}</p>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="dismissReport(${i})">Dismiss</button>
+          <button class="btn btn-primary" onclick="blockUser('${r.name}');dismissReport(${i})">Block user</button>
+        </div>
+      </div>
+    </div>`).join('');
+    
+}
+function dismissReport(idx){
+  const reports = DB.get('bloom_reports', []);
+  reports.splice(idx,1);
+  DB.set('bloom_reports', reports);
+  renderModQueue();
+}
 
+function getInvites(){ return DB.get('bloom_softcircle_invites', []); }
+function saveInvites(v){ DB.set('bloom_softcircle_invites', v); }
+
+function generateSoftCircleInvite(forName){
+  const code = 'sc_' + Math.random().toString(36).slice(2,10);
+  const invites = getInvites();
+  invites.push({code, for: forName || '', createdBy: currentUser?.email || 'unknown', createdAt: Date.now(), used: false, usedAt: null});
+  saveInvites(invites);
+  const link = location.origin + location.pathname + '?invite=' + code;
+  return link;
+}
+
+function hasSoftCircleAccess(){
+  return DB.get('bloom_softcircle_access', false) === true;
+}
+function tryRedeemInviteFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const code = params.get('invite');
+  if(!code) return false;
+  const invites = getInvites();
+  const inv = invites.find(i => i.code === code && !i.used);
+  if(!inv) return false;
+  inv.used = true; inv.usedAt = Date.now();
+  saveInvites(invites);
+  DB.set('bloom_softcircle_access', true);
+  return true;
+}
+function redeemInviteManually(){
+  const code = document.getElementById('inviteCodeInput').value.trim();
+  const invites = getInvites();
+  const inv = invites.find(i => i.code === code && !i.used);
+  if(!inv){ toast('That code is invalid or already used.'); return; }
+  inv.used = true; inv.usedAt = Date.now();
+  saveInvites(invites);
+  DB.set('bloom_softcircle_access', true);
+  toast("You're in 💗");
+  renderGirlsChatPage();
+}
 /* ============================================================
    HYDRATION BUDDY — walks in every 2 minutes, walks out after response
 ============================================================ */
@@ -4244,7 +4364,6 @@ function applyTimeTheme(){
 }
 applyTimeTheme();
 setInterval(applyTimeTheme, 5*60*1000);
-
 const PROFANITY_LIST = ['damn','hell','stupid','idiot','shut up','hate you','fuck','shit','bitch','asshole'];
 function containsProfanity(text){
   const lower = text.toLowerCase();
@@ -4253,11 +4372,8 @@ function containsProfanity(text){
 function containsLink(text){
   return /(https?:\/\/|www\.|\.com|\.net|\.org)/i.test(text);
 }
-document.addEventListener('input', (e)=>{
-  if(e.target && e.target.id==='kindnessInput'){
-    document.getElementById('kindnessCount').textContent = e.target.value.length;
-  }
-});
+
+const GIRLS_CHAT_BLOCKLIST = [...PROFANITY_LIST, 'kik','snap me','snapchat','whatsapp','my number','add me','venmo','onlyfans'];
 function getKindness(){
   let k = DB.get('bloom_kindness', null);
   if(!k){
