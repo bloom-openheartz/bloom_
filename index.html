@@ -897,18 +897,6 @@ body.intro-locked{overflow:hidden;height:100vh;}
       window.onGoogleSignedIn && window.onGoogleSignedIn({ name: u.displayName, email: u.email, uid: u.uid });
     }catch(err){ console.error("Google sign-in failed:", err); }
   };
-  // Modules don't share scope with your classic <script> below, so expose what it needs:
-  window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential };
-
-  window.handleCredentialResponse = async function(response){
-    try{
-      const credential = GoogleAuthProvider.credential(response.credential);
-      const result = await signInWithCredential(auth, credential);
-      const u = result.user;
-      window.onGoogleSignedIn && window.onGoogleSignedIn({ name: u.displayName, email: u.email, uid: u.uid });
-    }catch(err){ console.error("Google sign-in failed:", err); }
-
-  };
 </script>
 <div class="scroll-progress" id="scrollProgress"></div>
 <div class="intro-overlay" id="introOverlay">
