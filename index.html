@@ -1992,7 +1992,26 @@ function sparkleBurst(x, y){
     setTimeout(()=>p.remove(), 1050);
   }
 }
+async function generateSoftCircleInvite(forName){
+  const code = 'sc_' + Math.random().toString(36).slice(2,10);
+  const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
+  await addDoc(collection(db, 'invites'), {
+    code, for: forName || '', createdBy: currentUser?.email || 'unknown',
+    createdAt: serverTimestamp(), used: false
+  });
+  return location.origin + location.pathname + '?invite=' + code;
+}
 
+async function redeemInviteCode(code){
+  const { db, collection, query, where, getDocs, updateDoc, doc } = window.BloomFB; // add these imports
+  const q = query(collection(db,'invites'), where('code','==',code), where('used','==',false));
+  const snap = await getDocs(q);
+  if(snap.empty) return false;
+  const d = snap.docs[0];
+  await updateDoc(doc(db,'invites',d.id), { used:true, usedAt: Date.now() });
+  DB.set('bloom_softcircle_access', true);
+  return true;
+}
 /* ---------- scroll progress bar + navbar shadow ---------- */
 window.addEventListener('scroll', ()=>{
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY>10);
