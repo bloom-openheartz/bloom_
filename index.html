@@ -448,10 +448,57 @@ body.evening .msg{background:#3a2c26;}
 .affirm-modal-overlay.open .affirm-modal-box{transform:scale(1);opacity:1;}
 .affirm-modal-box .script{font-size:2.4rem;display:block;margin-bottom:14px;}
 .affirm-modal-box h3{color:#fff;font-size:1.5rem;font-style:italic;margin-bottom:22px;}
+/* ---------- realistic rain: puddle + splash ---------- */
+.ambient-puddle{
+  position:fixed;bottom:0;left:0;right:0;height:0;
+  background:linear-gradient(180deg, rgba(122,158,138,0) 0%, rgba(80,110,130,.35) 40%, rgba(60,90,110,.55) 100%);
+  opacity:0;transition:opacity 1.2s ease, height 1.2s ease;
+  pointer-events:none;overflow:hidden;z-index:2;
+}
+.ambient-puddle.on{opacity:1;height:26px;}
+.ambient-puddle .ripple{
+  position:absolute;bottom:2px;width:10px;height:4px;border-radius:50%;
+  border:1px solid rgba(220,235,245,.55);opacity:0;
+  animation:ambientRipple 1.6s ease-out forwards;
+}
+@keyframes ambientRipple{
+  0%{transform:scale(.2);opacity:.7;}
+  100%{transform:scale(3.4);opacity:0;}
+}
+.ambient-splash{position:absolute;bottom:22px;width:2px;height:2px;pointer-events:none;z-index:3;}
+.ambient-splash .drop-bit{
+  position:absolute;bottom:0;width:2.4px;height:2.4px;border-radius:50%;
+  background:rgba(210,230,245,.85);
+  animation:ambientSplashBit .5s ease-out forwards;
+}
+@keyframes ambientSplashBit{
+  0%{transform:translate(0,0) scale(1);opacity:.9;}
+  100%{transform:translate(var(--sx,6px), -14px) scale(.4);opacity:0;}
+}
+.rain-drop{border-radius:0 0 2px 2px;}
 
+/* ---------- realistic forest: bigger trees, grass, animals ---------- */
+.ambient-grass{position:fixed;bottom:0;left:0;right:0;height:34px;pointer-events:none;
+  background:linear-gradient(180deg, rgba(98,133,113,0) 0%, rgba(70,105,80,.55) 100%);
+  opacity:0;transition:opacity 1s ease;z-index:2;overflow:hidden;
+}
+.ambient-grass.on{opacity:1;}
+.ambient-grass .blade{position:absolute;bottom:0;width:3px;background:#557a5e;
+  border-radius:3px 3px 0 0;transform-origin:bottom center;animation:decoSway 3.6s ease-in-out infinite;}
+.forest-tree.big{opacity:.6;filter:saturate(1.05);}
+.ambient-deer{position:absolute;bottom:20px;z-index:3;pointer-events:none;}
+.ambient-deer svg{width:100%;height:100%;display:block;}
+.ambient-deer .deer-leg{transform-box:fill-box;transform-origin:top center;}
+.ambient-deer.walking .leg-fl{animation:deerLegA .5s ease-in-out infinite;}
+.ambient-deer.walking .leg-bl{animation:deerLegB .5s ease-in-out infinite;}
+.ambient-deer.walking .leg-fr{animation:deerLegB .5s ease-in-out infinite;}
+.ambient-deer.walking .leg-br{animation:deerLegA .5s ease-in-out infinite;}
+@keyframes deerLegA{0%,100%{transform:rotate(14deg);}50%{transform:rotate(-14deg);}}
+@keyframes deerLegB{0%,100%{transform:rotate(-14deg);}50%{transform:rotate(14deg);}}
+.ambient-deer .deer-head-group{transform-box:fill-box;transform-origin:bottom center;transition:transform 1.4s ease;}
+.ambient-deer.grazing .deer-head-group{transform:rotate(28deg) translateY(2px);}
 #ambientLayer{position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden;}
-.rain-drop{position:absolute; top:-20px; width:1.5px; height:60px; background:linear-gradient(to bottom, transparent, rgba(122,158,138,.45));}
-@keyframes rainfall{to{transform:translateY(110vh);}}
+.rain-drop{position:absolute; top:-20px; width:1.5px; height:60px; background:linear-gradient(to bottom, transparent, rgba(122,158,138,.45));}@keyframes rainfall{to{transform:translateY(100vh);}}
 .ocean-wave{position:absolute; bottom:0; left:0; width:200%;}
 .ocean-wave.w1{opacity:.25; animation:oceanMove 14s linear infinite;}
 .ocean-wave.w2{opacity:.32; bottom:-6px; animation:oceanMove 9s linear infinite reverse;}
@@ -869,7 +916,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
 <body><script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
   const firebaseConfig = {
@@ -887,7 +934,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential };
+window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential, where, getDocs, updateDoc, doc };
 
   window.handleCredentialResponse = async function(response){
     try{
@@ -1991,15 +2038,20 @@ function sparkleBurst(x, y){
     ], {duration:700+Math.random()*300, easing:'ease-out'});
     setTimeout(()=>p.remove(), 1050);
   }
+}async function tryRedeemInviteFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const code = params.get('invite');
+  if(!code) return false;
+  return await redeemInviteCode(code);
 }
-async function generateSoftCircleInvite(forName){
-  const code = 'sc_' + Math.random().toString(36).slice(2,10);
-  const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
-  await addDoc(collection(db, 'invites'), {
-    code, for: forName || '', createdBy: currentUser?.email || 'unknown',
-    createdAt: serverTimestamp(), used: false
-  });
-  return location.origin + location.pathname + '?invite=' + code;
+
+async function redeemInviteManually(){
+  const code = document.getElementById('inviteCodeInput').value.trim();
+  if(!code){ toast('Enter a code first'); return; }
+  const ok = await redeemInviteCode(code);
+  if(!ok){ toast('That code is invalid or already used.'); return; }
+  toast("You're in 💗");
+  renderGirlsChatPage();
 }
 
 async function redeemInviteCode(code){
@@ -2821,10 +2873,10 @@ function seedGirlsRoomMsgs(room){
   ];
 }
 function persistGirlsChat(){ LS.set('bloom_girlsChatState', girlsChatState); }
-function renderGirlsChatPage(){
+async function renderGirlsChatPage(){
   const container = document.getElementById('girlsChatContainer');
   if(!container) return;
-  tryRedeemInviteFromUrl();
+  await tryRedeemInviteFromUrl();
   if(!hasSoftCircleAccess()){
     container.innerHTML = `
       <div style="max-width:420px;margin:0 auto;text-align:center;background:#fff;border-radius:24px;padding:36px;box-shadow:var(--shadow-soft);">
@@ -3044,7 +3096,7 @@ let soundscapeNodes = [];
 let ambientState = {rain:false, ocean:false, forest:false};
 let rainInterval=null;
 let birdInterval=null;
-
+let deerInterval=null;
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -3072,18 +3124,29 @@ function setAmbientVisual(kind, on){
   if(kind==='rain'){
     if(on){
       if(rainInterval) clearInterval(rainInterval);
+      if(!document.getElementById('ambientPuddle')){
+        layer.insertAdjacentHTML('beforeend', `<div class="ambient-puddle" id="ambientPuddle"></div>`);
+      }
+      document.getElementById('ambientPuddle').classList.add('on');
       rainInterval = setInterval(()=>{
+        const leftPct = Math.random()*100;
         const d = document.createElement('div');
         d.className='rain-drop';
-        d.style.left = Math.random()*100+'vw';
+        d.style.left = leftPct+'vw';
         const dur = 0.7+Math.random()*0.6;
         d.style.animation = `rainfall ${dur}s linear forwards`;
         layer.appendChild(d);
-        setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); }, dur*1000+80);
+        setTimeout(()=>{
+          if(d.parentNode) d.parentNode.removeChild(d);
+          spawnSplash(leftPct);
+        }, dur*1000);
       }, 55);
     } else {
       if(rainInterval) { clearInterval(rainInterval); rainInterval = null; }
       layer.querySelectorAll('.rain-drop').forEach(d=>d.remove());
+      layer.querySelectorAll('.ambient-splash').forEach(d=>d.remove());
+      const puddle = document.getElementById('ambientPuddle');
+      if(puddle) puddle.classList.remove('on');
     }
   }
   if(kind==='ocean'){
@@ -3105,20 +3168,33 @@ function setAmbientVisual(kind, on){
     const l = document.getElementById('forestTreeL');
     const r = document.getElementById('forestTreeR');
     if(on){
+      if(!document.getElementById('ambientGrass')){
+        layer.insertAdjacentHTML('beforeend', `<div class="ambient-grass" id="ambientGrass"></div>`);
+        buildGrassBlades();
+      }
+      document.getElementById('ambientGrass').classList.add('on');
       if(!l){
-        layer.insertAdjacentHTML('beforeend', `<svg class="forest-tree" id="forestTreeL" style="left:-20px;position:absolute;bottom:-10px;" viewBox="0 0 200 260" width="180"><rect x="90" y="180" width="20" height="70" fill="#8a6a4c"/><circle cx="100" cy="150" r="65" fill="#7A9E8A"/><circle cx="60" cy="120" r="45" fill="#8fae9c"/><circle cx="140" cy="130" r="50" fill="#628571"/></svg>`);
+        layer.insertAdjacentHTML('beforeend', `<svg class="forest-tree big" id="forestTreeL" style="left:-40px;position:absolute;bottom:-10px;" viewBox="0 0 200 260" width="260"><rect x="90" y="180" width="20" height="70" fill="#8a6a4c"/><circle cx="100" cy="150" r="65" fill="#7A9E8A"/><circle cx="60" cy="120" r="45" fill="#8fae9c"/><circle cx="140" cy="130" r="50" fill="#628571"/></svg>`);
       }
       if(!r){
-        layer.insertAdjacentHTML('beforeend', `<svg class="forest-tree" id="forestTreeR" style="right:-30px;position:absolute;bottom:-10px;" viewBox="0 0 200 260" width="220"><rect x="90" y="180" width="20" height="70" fill="#8a6a4c"/><circle cx="100" cy="150" r="65" fill="#628571"/><circle cx="60" cy="120" r="45" fill="#7A9E8A"/><circle cx="140" cy="130" r="50" fill="#8fae9c"/></svg>`);
+        layer.insertAdjacentHTML('beforeend', `<svg class="forest-tree big" id="forestTreeR" style="right:-50px;position:absolute;bottom:-10px;" viewBox="0 0 200 260" width="300"><rect x="90" y="180" width="20" height="70" fill="#8a6a4c"/><circle cx="100" cy="150" r="65" fill="#628571"/><circle cx="60" cy="120" r="45" fill="#7A9E8A"/><circle cx="140" cy="130" r="50" fill="#8fae9c"/></svg>`);
       }
       if(!birdInterval){
         spawnBird();
-        birdInterval = setInterval(spawnBird, 3200);
+        birdInterval = setInterval(spawnBird, 5200);
+      }
+      if(!deerInterval){
+        spawnDeer();
+        deerInterval = setInterval(spawnDeer, 14000);
       }
     } else {
       if(l) l.remove(); if(r) r.remove();
+      const grass = document.getElementById('ambientGrass');
+      if(grass) grass.classList.remove('on');
       if(birdInterval){ clearInterval(birdInterval); birdInterval=null; }
+      if(deerInterval){ clearInterval(deerInterval); deerInterval=null; }
       layer.querySelectorAll('.bird').forEach(b=>b.remove());
+      layer.querySelectorAll('.ambient-deer').forEach(d=>d.remove());
     }
   }
 }
@@ -3129,10 +3205,105 @@ function spawnBird(){
   b.className='bird';
   b.textContent = Math.random()>0.5 ? '🐦' : '🕊️';
   b.style.top = (10+Math.random()*30)+'vh';
-  const dur = 9+Math.random()*6;
+  const dur = 14+Math.random()*8;
   b.style.animationDuration = dur+'s';
   layer.appendChild(b);
   setTimeout(()=>{ if(b.parentNode) b.parentNode.removeChild(b); }, dur*1000+100);
+}
+function spawnSplash(leftPct){
+  const layer = document.getElementById('ambientLayer');
+  if(!layer || !ambientState.rain) return;
+  const puddle = document.getElementById('ambientPuddle');
+  if(puddle){
+    const ripple = document.createElement('div');
+    ripple.className='ripple';
+    ripple.style.left = leftPct+'vw';
+    puddle.appendChild(ripple);
+    setTimeout(()=>ripple.remove(), 1650);
+  }
+  const wrap = document.createElement('div');
+  wrap.className='ambient-splash';
+  wrap.style.left = leftPct+'vw';
+  for(let i=0;i<4;i++){
+    const bit = document.createElement('div');
+    bit.className='drop-bit';
+    const sx = (Math.random()*16-8)+'px';
+    bit.style.setProperty('--sx', sx);
+    bit.style.left = (Math.random()*6-3)+'px';
+    wrap.appendChild(bit);
+  }
+  layer.appendChild(wrap);
+  setTimeout(()=>wrap.remove(), 550);
+}
+
+function buildGrassBlades(){
+  const grass = document.getElementById('ambientGrass');
+  if(!grass) return;
+  let html='';
+  const count = Math.ceil(window.innerWidth/14);
+  for(let i=0;i<count;i++){
+    const left = (i/count)*100;
+    const delay = (Math.random()*3).toFixed(2);
+    html += `<div class="blade" style="left:${left}%;animation-delay:${delay}s;height:${10+Math.random()*10}px"></div>`;
+  }
+  grass.innerHTML = html;
+}
+
+const DEER_SVG = `
+<svg viewBox="0 0 140 90">
+  <ellipse cx="70" cy="84" rx="30" ry="4" fill="#2A2118" opacity=".12"/>
+  <g class="deer-leg leg-bl"><rect x="34" y="52" width="6" height="28" rx="3" fill="#8a6a4c"/></g>
+  <g class="deer-leg leg-br"><rect x="96" y="52" width="6" height="28" rx="3" fill="#7a5a3c"/></g>
+  <g class="deer-leg leg-fl"><rect x="46" y="50" width="6" height="30" rx="3" fill="#9a7a5c"/></g>
+  <g class="deer-leg leg-fr"><rect x="86" y="50" width="6" height="30" rx="3" fill="#8a6a4c"/></g>
+  <ellipse cx="66" cy="46" rx="34" ry="18" fill="#b98a5e"/>
+  <ellipse cx="66" cy="50" rx="30" ry="10" fill="#e8d3ae" opacity=".7"/>
+  <g class="deer-head-group">
+    <ellipse cx="104" cy="34" rx="13" ry="10" fill="#b98a5e"/>
+    <path d="M100 26 Q98 14 92 10" stroke="#6b4a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M108 26 Q112 12 120 8" stroke="#6b4a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="110" cy="32" r="1.6" fill="#2A2118"/>
+    <ellipse cx="98" cy="38" rx="3" ry="2" fill="#4a2f1c"/>
+  </g>
+  <ellipse cx="30" cy="42" rx="6" ry="12" fill="#b98a5e"/>
+</svg>`;
+
+let deerIdCounter = 0;
+function spawnDeer(){
+  const layer = document.getElementById('ambientLayer');
+  if(!layer || !ambientState.forest) return;
+  if(layer.querySelectorAll('.ambient-deer').length >= 1) return;
+
+  const el = document.createElement('div');
+  const id = 'deer-'+(deerIdCounter++);
+  el.className='ambient-deer walking';
+  el.id = id;
+  el.style.width='100px';
+  el.style.left='-110px';
+  el.innerHTML = DEER_SVG;
+  layer.appendChild(el);
+
+  const endX = 40+Math.random()*30;
+  const exitX = 115;
+  const walkOutDur = 9+Math.random()*3;
+  const walkInDur = 6+Math.random()*2;
+
+  el.style.transition = `left ${walkInDur}s linear`;
+  requestAnimationFrame(()=>{ el.style.left = endX+'vw'; });
+
+  setTimeout(()=>{
+    if(!document.getElementById(id)) return;
+    el.classList.remove('walking');
+    el.classList.add('grazing');
+    setTimeout(()=>{
+      if(!document.getElementById(id)) return;
+      el.classList.remove('grazing');
+      el.classList.add('walking');
+      el.style.transition = `left ${walkOutDur}s linear`;
+      requestAnimationFrame(()=>{ el.style.left = exitX+'vw'; });
+      setTimeout(()=>{ if(el.parentNode) el.remove(); }, walkOutDur*1000+200);
+    }, 3500+Math.random()*2000);
+  }, walkInDur*1000+100);
 }
 function setSoundscape(kind){
   if(currentSoundscape === kind) return;
@@ -3173,15 +3344,30 @@ function setSoundscape(kind){
     src.start(); lfo.start();
     soundscapeNodes.push(src, filter, lfo, lfoGain);
   } else if(kind==='forest'){
+    // gentle rustling leaves layer (softer, less harsh)
     const src = ctx.createBufferSource();
     src.buffer = makeNoiseBuffer(ctx);
     src.loop = true;
     const filter = ctx.createBiquadFilter();
-    filter.type='highpass'; filter.frequency.value=2400;
-    const g2 = ctx.createGain(); g2.gain.value=0.55;
+    filter.type='highpass'; filter.frequency.value=1800;
+    const g2 = ctx.createGain(); g2.gain.value=0.32;
     src.connect(filter); filter.connect(g2); g2.connect(master);
     src.start();
-    soundscapeNodes.push(src, filter, g2);
+
+    // warm low wind undertone for a relaxing feel
+    const src2 = ctx.createBufferSource();
+    src2.buffer = makeNoiseBuffer(ctx);
+    src2.loop = true;
+    const filter2 = ctx.createBiquadFilter();
+    filter2.type='lowpass'; filter2.frequency.value=340;
+    const lfo2 = ctx.createOscillator(); lfo2.frequency.value=0.06;
+    const lfoGain2 = ctx.createGain(); lfoGain2.gain.value=0.05;
+    lfo2.connect(lfoGain2); lfoGain2.connect(master.gain);
+    const g3 = ctx.createGain(); g3.gain.value=0.4;
+    src2.connect(filter2); filter2.connect(g3); g3.connect(master);
+    src2.start(); lfo2.start();
+
+    soundscapeNodes.push(src, filter, g2, src2, filter2, g3, lfo2, lfoGain2);
   }
 }
 function playChime(){
@@ -3301,6 +3487,7 @@ function toggleMroomRain(){
   mroomRainOn = !mroomRainOn;
   DB.set('bloom_mroom_rain', mroomRainOn);
   applyMroomRainState();
+  
 }
 function applyMroomRainState(){
   const btn = document.getElementById('mroomRainToggle');
@@ -3459,18 +3646,6 @@ function dismissReport(idx){
   reports.splice(idx,1);
   DB.set('bloom_reports', reports);
   renderModQueue();
-}
-
-function getInvites(){ return DB.get('bloom_softcircle_invites', []); }
-function saveInvites(v){ DB.set('bloom_softcircle_invites', v); }
-
-function generateSoftCircleInvite(forName){
-  const code = 'sc_' + Math.random().toString(36).slice(2,10);
-  const invites = getInvites();
-  invites.push({code, for: forName || '', createdBy: currentUser?.email || 'unknown', createdAt: Date.now(), used: false, usedAt: null});
-  saveInvites(invites);
-  const link = location.origin + location.pathname + '?invite=' + code;
-  return link;
 }
 
 function hasSoftCircleAccess(){
@@ -3979,9 +4154,10 @@ function startBubblePop(){
     b.style.transition = `top ${5+Math.random()*3}s linear`;
     zone.appendChild(b);
     requestAnimationFrame(()=>{ b.style.top='-60px'; });
-    b.addEventListener('click', ()=>{
+   b.addEventListener('click', ()=>{
       bubbleScore++; document.getElementById('bubbleScore').textContent = bubbleScore;
       playClick();
+      awardGameCoins('bubble', 1);
       b.style.transform='scale(1.6)'; b.style.opacity='0';
       setTimeout(()=>b.remove(), 150);
     });
@@ -4007,9 +4183,12 @@ function flipMemory(el){
     memoryLock=true;
     const [a,b] = memoryFlipped;
     if(a.dataset.icon===b.dataset.icon){
-      a.classList.add('matched'); b.classList.add('matched');
+    a.classList.add('matched'); b.classList.add('matched');
       memoryFlipped=[]; memoryLock=false; memoryMatched++;
-      if(memoryMatched===MEMORY_ICONS.length) setTimeout(()=>toast('You matched them all 🎉'), 300);
+      if(memoryMatched===MEMORY_ICONS.length){
+        awardGameCoins('memory', memoryMatched);
+        setTimeout(()=>toast('You matched them all 🎉'), 300);
+      }
     } else {
       setTimeout(()=>{ a.classList.remove('flipped'); b.classList.remove('flipped'); memoryFlipped=[]; memoryLock=false; }, 750);
     }
@@ -4099,10 +4278,11 @@ function initPetalGame(stage){
     timeLeft--; document.getElementById('petalTime').textContent=timeLeft+'s';
     if(timeLeft<=0) endPetal();
   }, 1000);
-  function endPetal(){
+function endPetal(){
     running=false; clearInterval(spawnTimer); clearInterval(clock);
     petals.forEach(p=>p.remove());
     saveGameScore('petal', score);
+    awardGameCoins('petal', score);
     stage.innerHTML += `<div style="text-align:center; margin-top:16px;"><h3>Basket's full 🌸</h3><p>You caught ${score} petals.</p><button class="btn btn-primary" onclick="openGame('petal')">Play again</button></div>`;
   }
   gameCleanupFn = ()=>{ running=false; clearInterval(spawnTimer); clearInterval(clock); wrap.removeEventListener('mousemove', moveBasket); };
@@ -4149,12 +4329,12 @@ function nextScramble(){
   document.getElementById('scrambleLetters').innerHTML = scrambled.split('').map(l=>`<span>${l}</span>`).join('');
   document.getElementById('scrambleInput').value='';
   document.getElementById('scrambleHint').textContent = 'a word about feeling okay';
-}
-function checkScramble(){
+}function checkScramble(){
   const val = document.getElementById('scrambleInput').value.trim().toUpperCase();
   if(val===scrambleAnswer){
     scrambleScoreCount++;
     document.getElementById('scrambleScore').textContent = scrambleScoreCount;
+    awardGameCoins('scramble', 1);
     toast('Nice! 🎉');
     nextScramble();
   } else {
@@ -4477,6 +4657,8 @@ function renderHabitTracker(){
       <h3 style="font-size:1.2rem">Today's check-in</h3>
       <span class="habit-streak">${streak>0 ? streak+'-day streak 🔥' : 'start your streak'}</span>
     </div>
+    <span id="streakDisplay" style="font-size:.8rem;color:var(--terracotta);font-weight:700;margin-right:10px"></span>
+<span id="coinBadge" style="font-size:.8rem;color:var(--gold);font-weight:700"></span>
     ${HABITS.map(h=>`
       <div class="habit-row">
         <div class="habit-check ${state[h.id]?'checked':''}" onclick="toggleHabit('${h.id}', this)">${state[h.id]?'✓':''}</div>
@@ -4493,6 +4675,7 @@ function toggleHabit(id, el){
   if(all[today][id]) burstConfetti(el);
   renderHabitTracker();
   renderGrowthPlant();
+  registerStreakProgress();
 }
 function computeStreak(all){
   let streak = 0;
@@ -4567,7 +4750,218 @@ function renderGrowthPlant(){
       <div class="gp-bar"><i style="width:${score}%"></i></div>
     </div>`;
 }
+/* ============================================================
+   BLOOM — STREAK, COINS & MONTHLY-CYCLE MODULE
+   Paste this whole block into your <script> section,
+   ideally right BEFORE the line:  init();
+   ============================================================
+   WHAT THIS DOES
+   - Coins: earned from mini-games (bubble/memory/petal/scramble)
+   - Streak: daily habit-completion streak (reuses your existing
+     computeStreak() logic, but now persists across days properly)
+   - Monthly cap: once a streak hits 30 days, it "completes" —
+     gets stamped as a finished badge with a unique id, and a
+     BRAND NEW streak cycle starts at 0 (never the same cycle twice)
+   - Break detection: if the user misses a day (had an active
+     streak yesterday, nothing done today by the time they open
+     the app), we fire a soft, quietly-flirty notification and
+     deduct coins as a light "penalty"
+   - Recovery: user can spend earned game-coins to instantly
+     restore/repair the broken streak (once per break)
+   ============================================================ */
 
+/* ---------- storage ---------- */
+function getCoins(){ return DB.get('bloom_coins', 0); }
+function setCoins(v){ DB.set('bloom_coins', Math.max(0, v)); renderCoinBadge(); }
+function addCoins(n, reason){
+  const cur = getCoins();
+  setCoins(cur + n);
+  if(n > 0) toast(`+${n} coins ✨ ${reason ? '('+reason+')' : ''}`);
+}
+function spendCoins(n){
+  const cur = getCoins();
+  if(cur < n) return false;
+  setCoins(cur - n);
+  return true;
+}
+
+/* streak-cycle record shape:
+   { cycleId, startDate, lastCompletedDate, length, brokenOnce }
+   completed cycles get pushed into bloom_streak_history */
+function getStreakCycle(){
+  return DB.get('bloom_streak_cycle', {
+    cycleId: 'cycle_'+Date.now().toString(36),
+    startDate: getTodayKey(),
+    lastCompletedDate: null,
+    length: 0,
+    brokenOnce: false
+  });
+}
+function saveStreakCycle(c){ DB.set('bloom_streak_cycle', c); }
+function getStreakHistory(){ return DB.get('bloom_streak_history', []); }
+function saveStreakHistory(h){ DB.set('bloom_streak_history', h); }
+
+const STREAK_MONTHLY_CAP = 30; // "month" = 30 days, tweak if you want calendar-month logic
+
+/* ---------- core: call this once per app load, AFTER habit data exists ---------- */
+function evaluateStreakOnLoad(){
+  const habitsAll = DB.get('bloom_habits', {});
+  const today = getTodayKey();
+  const yesterday = (()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); })();
+
+  let cycle = getStreakCycle();
+
+  const didToday = habitsAll[today] && HABITS.every(h=>habitsAll[today][h.id]);
+  const didYesterday = habitsAll[yesterday] && HABITS.every(h=>habitsAll[yesterday][h.id]);
+
+  // if they had a streak going (length>0) and yesterday wasn't completed
+  // and today hasn't been completed yet either -> streak just broke
+  if(cycle.length > 0 && cycle.lastCompletedDate && cycle.lastCompletedDate !== today && cycle.lastCompletedDate !== yesterday){
+    handleStreakBreak(cycle);
+    return;
+  }
+  renderStreakUI();
+}
+
+/* ---------- call this whenever a habit-day is fully completed (hook into toggleHabit) ---------- */
+function registerStreakProgress(){
+  const habitsAll = DB.get('bloom_habits', {});
+  const today = getTodayKey();
+  const allDoneToday = habitsAll[today] && HABITS.every(h=>habitsAll[today][h.id]);
+  if(!allDoneToday) { renderStreakUI(); return; }
+
+  let cycle = getStreakCycle();
+  if(cycle.lastCompletedDate === today) { renderStreakUI(); return; } // already counted today
+
+  cycle.length += 1;
+  cycle.lastCompletedDate = today;
+  cycle.brokenOnce = false;
+  saveStreakCycle(cycle);
+
+  if(cycle.length >= STREAK_MONTHLY_CAP){
+    completeStreakCycle(cycle);
+  } else {
+    renderStreakUI();
+  }
+}
+
+/* ---------- monthly completion: stamp unique badge, start a fresh cycle ---------- */
+function completeStreakCycle(cycle){
+  const history = getStreakHistory();
+  history.unshift({
+    cycleId: cycle.cycleId,
+    startDate: cycle.startDate,
+    completedDate: getTodayKey(),
+    length: cycle.length,
+    badge: '🏅 '+cycle.length+'-Day Bloom Cycle'
+  });
+  saveStreakHistory(history);
+
+  // reward coins for finishing a full cycle
+  addCoins(50, 'streak cycle complete');
+
+  // brand NEW cycle — different id, reset to 0, never reused
+  const freshCycle = {
+    cycleId: 'cycle_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    startDate: getTodayKey(),
+    lastCompletedDate: null,
+    length: 0,
+    brokenOnce: false
+  };
+  saveStreakCycle(freshCycle);
+
+  toast('🏅 Full cycle complete! New streak journey begins 🌱');
+  renderStreakUI();
+}
+
+/* ---------- break handling: flirty-soft notice + coin penalty ---------- */
+const STREAK_BREAK_LINES = [
+  "Ooh, you left me waiting yesterday... I'm not mad, just a little disappointed 😏",
+  "Missed a day, huh? I'll forgive you — but it'll cost you a little something 😉",
+  "You ghosted your streak. Rude. Pay the toll and let's make up 💸💛",
+  "A whole day without checking in on us? Bold move. Coins say sorry for you 🙃",
+  "Your streak got stood up yesterday. It's not petty, it's just... a small fee now 😌"
+];
+function handleStreakBreak(cycle){
+  const penalty = Math.min(15, getCoins()); // soft penalty, never goes negative
+  if(penalty > 0) setCoins(getCoins() - penalty);
+
+  cycle.brokenOnce = true;
+  const brokenLength = cycle.length;
+  cycle.length = 0;
+  cycle.lastCompletedDate = null;
+  cycle.startDate = getTodayKey();
+  saveStreakCycle(cycle);
+
+  const line = STREAK_BREAK_LINES[Math.floor(Math.random()*STREAK_BREAK_LINES.length)];
+  showStreakBreakToast(line, penalty, brokenLength);
+  renderStreakUI();
+}
+function showStreakBreakToast(line, penalty, brokenLength){
+  const stack = document.getElementById('reminderStack');
+  if(!stack) { toast(line); return; }
+  const el = document.createElement('div');
+  el.className = 'reminder-toast show';
+  el.style.borderLeftColor = 'var(--terracotta)';
+  el.style.cursor = 'pointer';
+  el.innerHTML = `<strong>Streak broken 💔</strong><br>${line}${penalty>0?`<br><span style="opacity:.7">-${penalty} coins</span>`:''}<br><span style="color:var(--sage);font-weight:700;text-decoration:underline">Tap to recover it</span>`;
+  el.onclick = ()=>{ el.remove(); openStreakRecoveryModal(brokenLength); };
+  stack.appendChild(el);
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 400); }, 9000);
+}
+
+/* ---------- recovery: spend game coins to restore the broken streak ---------- */
+const STREAK_RECOVERY_COST = 25;
+function openStreakRecoveryModal(brokenLength){
+  showModal(`
+    <h3>💫 Recover your streak?</h3>
+    <p style="opacity:.85;margin-bottom:14px">Your ${brokenLength}-day streak can come back to life — for ${STREAK_RECOVERY_COST} coins earned from games. No hard feelings, just a little comeback fee 😉</p>
+    <p style="font-weight:700;margin-bottom:14px">Your coins: ${getCoins()} 🪙</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="attemptStreakRecovery(${brokenLength})">Recover streak</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal('premiumModal')">Let it go</button>
+    </div>
+  `);
+}
+function attemptStreakRecovery(brokenLength){
+  if(!spendCoins(STREAK_RECOVERY_COST)){
+    toast("Not enough coins yet — go earn some in the Mini Games 🎮");
+    return;
+  }
+  let cycle = getStreakCycle();
+  cycle.length = brokenLength;
+  cycle.lastCompletedDate = getTodayKey();
+  cycle.brokenOnce = false;
+  saveStreakCycle(cycle);
+  closeModal('premiumModal');
+  toast(`Streak restored to ${brokenLength} days 🔥 Welcome back`);
+  renderStreakUI();
+}
+
+/* ---------- UI: coin badge + streak display (hooks into habit card & nav) ---------- */
+function renderCoinBadge(){
+  const el = document.getElementById('coinBadge');
+  if(el) el.textContent = '🪙 ' + getCoins();
+}
+function renderStreakUI(){
+  const cycle = getStreakCycle();
+  const el = document.getElementById('streakDisplay');
+  if(el){
+    el.innerHTML = cycle.length > 0
+      ? `${cycle.length}-day streak 🔥 <span style="opacity:.6;font-weight:400">(${STREAK_MONTHLY_CAP - cycle.length} to next badge)</span>`
+      : `start your streak`;
+  }
+  renderCoinBadge();
+}
+
+/* ---------- hook this into your existing game-end score savers ---------- */
+function awardGameCoins(gameKey, score){
+  // simple conversion — tweak rates per game as you like
+  const rates = { bubble: 1, memory: 3, petal: 2, scramble: 5, zen: 0, mandala: 0 };
+  const rate = rates[gameKey] ?? 1;
+  const earned = Math.max(0, Math.round(score * rate));
+  if(earned > 0) addCoins(earned, gameKey+' game');
+}
 function runIntroMascot(){
   const seen = safeSessionGet('bloom_intro_played');
   const overlay = document.getElementById('introOverlay');
@@ -4618,6 +5012,7 @@ function init(){
   checkForUnlockedLetters();
   setTimeout(showBuddyMessage, 1500);
   renderHabitTracker();
+  evaluateStreakOnLoad();
   renderGrowthPlant();
   pulseLoop();
   scheduleHydroWalkIn(2*60*1000);
