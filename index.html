@@ -4319,17 +4319,7 @@ function startBubblePop(){
     setTimeout(()=>{ if(b.parentNode) b.remove(); }, 8500);
   }, 750);
 }
-async function handleGenerateInvite(){
-  const nameInput = document.getElementById('inviteForNameInput');
-  const link = await generateSoftCircleInvite(nameInput.value);
-  try{
-    await navigator.clipboard.writeText(link);
-    toast('Invite link copied — send it directly to them 💌');
-  }catch(e){
-    toast('Link generated: '+link);
-  }
-}
-async function generateSoftCircleInvite(forName){
+  async function generateSoftCircleInvite(forName){
   const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
   const code = Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
   await addDoc(collection(db,'invites'), {
@@ -4341,6 +4331,17 @@ async function generateSoftCircleInvite(forName){
   const link = window.location.origin + window.location.pathname + '?invite=' + code;
   return link;
 }
+async function handleGenerateInvite(){
+  const nameInput = document.getElementById('inviteForNameInput');
+  const link = await generateSoftCircleInvite(nameInput.value);
+  try{
+    await navigator.clipboard.writeText(link);
+    toast('Invite link copied — send it directly to them 💌');
+  }catch(e){
+    toast('Link generated: '+link);
+  }
+}
+
 const MEMORY_ICONS = ['💧','🌿','🌙','☀️','🫧','🧘','🕊️','💛'];
 let memoryFlipped = [], memoryMatched = 0, memoryMoves = 0, memoryLock=false;
 function startMemoryGame(){
