@@ -911,6 +911,45 @@ body.intro-locked{overflow:hidden;height:100vh;}
 .contact-card h4{font-size:1.05rem;margin-bottom:2px;}
 .contact-role{font-size:.76rem;color:var(--sage);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
 .contact-email{font-size:.82rem;color:#5c5142;word-break:break-all;}
+.ambient-grass{position:fixed;bottom:0;left:0;right:0;height:46px;pointer-events:none;
+  background:linear-gradient(180deg, rgba(98,133,113,0) 0%, rgba(58,88,64,.6) 55%, rgba(40,64,46,.75) 100%);
+  opacity:0;transition:opacity 1s ease;z-index:2;overflow:hidden;
+}
+.ambient-grass.on{opacity:1;}
+.ambient-grass .blade{position:absolute;bottom:0;border-radius:3px 3px 0 0;transform-origin:bottom center;animation:decoSway ease-in-out infinite;}
+.ambient-deer .deer-leg{transform-box:fill-box;transform-origin:top center;}
+.ambient-deer.walking .leg-fl{animation:deerLegA .48s ease-in-out infinite;}
+.ambient-deer.walking .leg-bl{animation:deerLegB .48s ease-in-out infinite;}
+.ambient-deer.walking .leg-fr{animation:deerLegB .48s ease-in-out infinite;}
+.ambient-deer.walking .leg-br{animation:deerLegA .48s ease-in-out infinite;}
+@keyframes deerLegA{0%,100%{transform:rotate(16deg);}50%{transform:rotate(-16deg);}}
+@keyframes deerLegB{0%,100%{transform:rotate(-16deg);}50%{transform:rotate(16deg);}}
+.ambient-deer .deer-head-group{transform-box:fill-box;transform-origin:bottom center;transition:transform 1.4s ease;}
+.ambient-deer.grazing .deer-head-group{transform:rotate(38deg) translate(-6px,10px);}
+.rain-drop{
+  position:absolute;top:-24px;width:3px;height:22px;
+  background:linear-gradient(to bottom, rgba(210,230,245,0), rgba(190,220,245,.9));
+  border-radius:50% 50% 50% 50% / 65% 65% 35% 35%;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.4));
+}
+.ambient-puddle{
+  position:fixed;bottom:0;left:0;right:0;height:0;
+  background:linear-gradient(180deg, rgba(122,158,138,0) 0%, rgba(70,100,125,.5) 35%, rgba(45,75,100,.75) 100%);
+  opacity:0;transition:opacity 1.2s ease, height 1.2s ease;
+  pointer-events:none;overflow:hidden;z-index:2;
+}
+.ambient-puddle.on{opacity:1;height:44px;}
+.ambient-puddle .ripple{
+  position:absolute;bottom:4px;width:14px;height:6px;border-radius:50%;
+  border:1.5px solid rgba(225,240,250,.65);opacity:0;
+  animation:ambientRipple 1.7s ease-out forwards;
+}
+.ambient-splash{position:absolute;bottom:40px;width:2px;height:2px;pointer-events:none;z-index:3;}
+.ambient-splash .drop-bit{
+  position:absolute;bottom:0;width:3.2px;height:3.2px;border-radius:50%;
+  background:rgba(220,238,250,.95);
+  animation:ambientSplashBit .55s ease-out forwards;
+}
 </style>
 </head>
 <body><script type="module">
@@ -1735,7 +1774,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
   <h3 style="margin-bottom:14px;">Invite someone to Soft Circle</h3>
   <p style="font-size:.85rem;color:#5c5142;margin-bottom:12px;">Generates a one-time link — send it directly to someone you know. It stops working once they use it.</p>
   <input id="inviteForNameInput" placeholder="Who's this for? (just for your own reference)" style="width:100%;border:1.5px solid var(--petal);border-radius:12px;padding:11px 14px;margin-bottom:10px;">
-  <button class="btn btn-primary" onclick="const l=generateSoftCircleInvite(document.getElementById('inviteForNameInput').value); navigator.clipboard?.writeText(l); toast('Invite link copied — send it directly to them 💌');">Generate invite link</button>
+<button class="btn btn-primary" onclick="handleGenerateInvite()">Generate invite link</button>
 </div>
   <div class="section-head reveal"><h2 style="font-size:1.6rem">Community Guidelines</h2></div>
   <div class="community-guide-card reveal">
@@ -3235,37 +3274,78 @@ function spawnSplash(leftPct){
   layer.appendChild(wrap);
   setTimeout(()=>wrap.remove(), 550);
 }
-
+function spawnSplash(leftPct){
+  const layer = document.getElementById('ambientLayer');
+  if(!layer || !ambientState.rain) return;
+  const puddle = document.getElementById('ambientPuddle');
+  if(puddle){
+    const ripple = document.createElement('div');
+    ripple.className='ripple';
+    ripple.style.left = leftPct+'vw';
+    puddle.appendChild(ripple);
+    setTimeout(()=>ripple.remove(), 1750);
+  }
+  const wrap = document.createElement('div');
+  wrap.className='ambient-splash';
+  wrap.style.left = leftPct+'vw';
+  for(let i=0;i<7;i++){
+    const bit = document.createElement('div');
+    bit.className='drop-bit';
+    const sx = (Math.random()*26-13)+'px';
+    bit.style.setProperty('--sx', sx);
+    bit.style.left = (Math.random()*8-4)+'px';
+    wrap.appendChild(bit);
+  }
+  layer.appendChild(wrap);
+  setTimeout(()=>wrap.remove(), 600);
+}
+/* ---------- realistic grass blades ---------- */
 function buildGrassBlades(){
   const grass = document.getElementById('ambientGrass');
   if(!grass) return;
   let html='';
-  const count = Math.ceil(window.innerWidth/14);
+  const count = Math.ceil(window.innerWidth/6);
   for(let i=0;i<count;i++){
     const left = (i/count)*100;
+    const h = 14+Math.random()*22;
+    const bend = (Math.random()*10-5).toFixed(1);
     const delay = (Math.random()*3).toFixed(2);
-    html += `<div class="blade" style="left:${left}%;animation-delay:${delay}s;height:${10+Math.random()*10}px"></div>`;
+    const dur = (2.6+Math.random()*2.2).toFixed(2);
+    const w = 2+Math.random()*2;
+    const shade = ['#4d7256','#5c8566','#6b9877','#43664c'][i%4];
+    html += `<div class="blade" style="left:${left}%;width:${w}px;height:${h}px;background:${shade};animation-duration:${dur}s;animation-delay:${delay}s;transform:rotate(${bend}deg)"></div>`;
   }
   grass.innerHTML = html;
-}
+}const DEER_SVG = `
+<svg viewBox="0 0 200 130">
+  <ellipse cx="100" cy="122" rx="42" ry="5" fill="#2A2118" opacity=".14"/>
+  <g class="deer-leg leg-bl"><rect x="55" y="78" width="7" height="40" rx="3" fill="#8a5c34"/><rect x="55" y="112" width="7" height="6" fill="#3a2a1c"/></g>
+  <g class="deer-leg leg-br"><rect x="140" y="78" width="7" height="40" rx="3" fill="#7a4e2c"/><rect x="140" y="112" width="7" height="6" fill="#3a2a1c"/></g>
+  <g class="deer-leg leg-fl"><rect x="72" y="74" width="7" height="44" rx="3" fill="#9a6a3c"/><rect x="72" y="112" width="7" height="6" fill="#3a2a1c"/></g>
+  <g class="deer-leg leg-fr"><rect x="122" y="74" width="7" height="44" rx="3" fill="#8a5c34"/><rect x="122" y="112" width="7" height="6" fill="#3a2a1c"/></g>
 
-const DEER_SVG = `
-<svg viewBox="0 0 140 90">
-  <ellipse cx="70" cy="84" rx="30" ry="4" fill="#2A2118" opacity=".12"/>
-  <g class="deer-leg leg-bl"><rect x="34" y="52" width="6" height="28" rx="3" fill="#8a6a4c"/></g>
-  <g class="deer-leg leg-br"><rect x="96" y="52" width="6" height="28" rx="3" fill="#7a5a3c"/></g>
-  <g class="deer-leg leg-fl"><rect x="46" y="50" width="6" height="30" rx="3" fill="#9a7a5c"/></g>
-  <g class="deer-leg leg-fr"><rect x="86" y="50" width="6" height="30" rx="3" fill="#8a6a4c"/></g>
-  <ellipse cx="66" cy="46" rx="34" ry="18" fill="#b98a5e"/>
-  <ellipse cx="66" cy="50" rx="30" ry="10" fill="#e8d3ae" opacity=".7"/>
+  <path d="M55 55 Q100 30 155 58 Q160 82 140 84 Q100 92 62 82 Q48 78 55 55Z" fill="#b9793f"/>
+  <path d="M60 58 Q100 40 150 60" stroke="#8a5c34" stroke-width="2" fill="none" opacity=".4"/>
+  <!-- spots -->
+  <circle cx="80" cy="58" r="3" fill="#f0d9b0"/><circle cx="100" cy="52" r="3" fill="#f0d9b0"/>
+  <circle cx="120" cy="58" r="3" fill="#f0d9b0"/><circle cx="95" cy="70" r="3" fill="#f0d9b0"/>
+  <circle cx="130" cy="72" r="3" fill="#f0d9b0"/><circle cx="70" cy="72" r="3" fill="#f0d9b0"/>
+  <circle cx="110" cy="66" r="2.6" fill="#f0d9b0"/>
+
+  <ellipse cx="100" cy="60" rx="46" ry="18" fill="#e6cfa3" opacity=".5"/>
+  <path d="M150 40 Q165 20 158 8" stroke="#7a4e2c" stroke-width="4" fill="none" stroke-linecap="round"/>
+
   <g class="deer-head-group">
-    <ellipse cx="104" cy="34" rx="13" ry="10" fill="#b98a5e"/>
-    <path d="M100 26 Q98 14 92 10" stroke="#6b4a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M108 26 Q112 12 120 8" stroke="#6b4a30" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <circle cx="110" cy="32" r="1.6" fill="#2A2118"/>
-    <ellipse cx="98" cy="38" rx="3" ry="2" fill="#4a2f1c"/>
+    <path d="M150 36 Q172 30 178 12" stroke="#5c3a20" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M170 20 L164 10 M170 20 L178 14" stroke="#5c3a20" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M155 34 Q170 24 172 6" stroke="#5c3a20" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M166 14 L160 6 M166 14 L174 10" stroke="#5c3a20" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="164" cy="46" rx="20" ry="15" fill="#b9793f"/>
+    <ellipse cx="180" cy="50" rx="9" ry="7" fill="#a8703a"/>
+    <circle cx="186" cy="50" r="2" fill="#2A2118"/>
+    <circle cx="168" cy="42" r="2.2" fill="#2A2118"/>
+    <ellipse cx="148" cy="38" rx="5" ry="9" fill="#b9793f"/>
   </g>
-  <ellipse cx="30" cy="42" rx="6" ry="12" fill="#b98a5e"/>
 </svg>`;
 
 let deerIdCounter = 0;
@@ -3278,7 +3358,7 @@ function spawnDeer(){
   const id = 'deer-'+(deerIdCounter++);
   el.className='ambient-deer walking';
   el.id = id;
-  el.style.width='100px';
+  el.style.width='170px';
   el.style.left='-110px';
   el.innerHTML = DEER_SVG;
   layer.appendChild(el);
@@ -4164,7 +4244,16 @@ function startBubblePop(){
     setTimeout(()=>{ if(b.parentNode) b.remove(); }, 8500);
   }, 750);
 }
-
+async function handleGenerateInvite(){
+  const nameInput = document.getElementById('inviteForNameInput');
+  const link = await generateSoftCircleInvite(nameInput.value);
+  try{
+    await navigator.clipboard.writeText(link);
+    toast('Invite link copied — send it directly to them 💌');
+  }catch(e){
+    toast('Link generated: '+link);
+  }
+}
 const MEMORY_ICONS = ['💧','🌿','🌙','☀️','🫧','🧘','🕊️','💛'];
 let memoryFlipped = [], memoryMatched = 0, memoryMoves = 0, memoryLock=false;
 function startMemoryGame(){
