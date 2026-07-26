@@ -973,6 +973,32 @@ body.intro-locked{overflow:hidden;height:100vh;}
 .ambient-rabbit .rabbit-leg-back{transform-box:fill-box;transform-origin:top center;}
 .ambient-rabbit.hopping .rabbit-leg-back{animation:rabbitLegBack .45s ease-in-out infinite;}
 @keyframes rabbitLegBack{0%,100%{transform:rotate(0deg);}45%{transform:rotate(-30deg);}55%{transform:rotate(-30deg);}}
+.doctor-launch-card{max-width:640px;margin:36px auto 0;background:#fff;border-radius:24px;padding:28px 32px;box-shadow:var(--shadow-soft);display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.doctor-launch-card .dl-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--sage),#5c8570);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;}
+.doctor-launch-card .dl-copy{flex:1;min-width:200px;}
+.doctor-launch-card h3{font-size:1.2rem;margin-bottom:4px;}
+.doctor-launch-card p{font-size:.86rem;color:#5c5142;}
+
+.doctor-overlay{position:fixed;inset:0;background:rgba(42,33,24,.55);backdrop-filter:blur(6px);z-index:4200;display:none;align-items:center;justify-content:center;padding:20px;}
+.doctor-overlay.open{display:flex;}
+.doctor-box{background:var(--cream);border-radius:26px;max-width:560px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lift);overflow:hidden;}
+.doctor-head{display:flex;align-items:center;gap:14px;padding:20px 22px;background:linear-gradient(120deg,var(--sage),#5c8570);color:#fff;}
+.doctor-head .dh-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+.doctor-head h3{color:#fff;font-size:1.15rem;margin-bottom:2px;}
+.doctor-head p{font-size:.74rem;opacity:.9;}
+.doctor-head .modal-close{position:static;margin-left:auto;color:#fff;cursor:pointer;}
+.doctor-feed{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px;background:var(--petal);}
+.doctor-msg{max-width:82%;padding:11px 15px;border-radius:16px;font-size:.9rem;line-height:1.5;background:#fff;box-shadow:var(--shadow-soft);}
+.doctor-msg.me{align-self:flex-end;background:var(--terracotta);color:#fff;}
+.doctor-msg.doc{align-self:flex-start;}
+.doctor-msg.doc .doc-tag{display:block;font-size:.68rem;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.doctor-typing{align-self:flex-start;font-size:.78rem;color:#8a8072;font-style:italic;padding-left:4px;}
+.doctor-inputrow{display:flex;gap:8px;padding:14px 16px;border-top:1px solid rgba(42,33,24,.06);background:#fff;}
+.doctor-inputrow textarea{flex:1;border:1.5px solid var(--petal);border-radius:16px;padding:10px 14px;font-family:inherit;font-size:.88rem;resize:none;min-height:44px;max-height:100px;}
+.doctor-inputrow textarea:focus{outline:none;border-color:var(--sage);}
+.doctor-actions{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 14px;font-size:.72rem;color:#8a8072;}
+.doctor-actions button{color:var(--sage);font-weight:700;}
+.doctor-disclaimer{font-size:.68rem;color:#8a8072;text-align:center;padding:0 20px 14px;}
 </style>
 </head>
 <body><script type="module">
@@ -1370,8 +1396,39 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
     </div>
     <div style="text-align:center;margin-top:26px"><button class="btn btn-ghost" onclick="resetShift()">Start a new shift</button></div>
   </div>
-</section>
+  <div class="doctor-launch-card reveal">
+  <div class="dl-avatar">🩺</div>
+  <div class="dl-copy">
+    <h3>Want to just talk it through first?</h3>
+    <p>Tell Dr. Bloom what's weighing on you — a calm, caring listener who'll take in your whole situation before saying anything back.</p>
+  </div>
+  <button class="btn btn-sage" onclick="openDoctorChat()">Start talking →</button>
+</div>
 
+<div class="doctor-overlay" id="doctorOverlay">
+  <div class="doctor-box">
+    <div class="doctor-head">
+      <div class="dh-avatar">🩺</div>
+      <div>
+        <h3>Dr. Bloom</h3>
+        <p>a warm ear, not a licensed therapist</p>
+      </div>
+      <span class="modal-close" onclick="closeDoctorChat()">✕</span>
+    </div>
+    <div class="doctor-feed" id="doctorFeed"></div>
+    <div class="doctor-inputrow">
+      <textarea id="doctorInput" placeholder="Share whatever's on your mind..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendToDoctor();}"></textarea>
+      <button class="btn btn-sage" onclick="sendToDoctor()">Send</button>
+    </div>
+    <div class="doctor-actions">
+      <span>Share as much as you need, then ask for thoughts whenever you're ready.</span>
+      <button onclick="askDoctorForThoughts()">I'm done, what do you think? →</button>
+    </div>
+    <div class="doctor-disclaimer">Dr. Bloom offers peer-style support, not medical or clinical advice. If you're in crisis, please see the <a href="#" onclick="closeDoctorChat();navigate('safety');return false;" style="color:var(--terracotta);font-weight:700">Crisis Resources</a> page.</div>
+  </div>
+</div>
+</section>
+<br><br>
 <!-- breathing gate -->
 <div class="breathe-gate" id="breatheGate">
   <span class="eyebrow" style="color:var(--gold)">before we begin</span>
@@ -1605,6 +1662,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
     <div class="games-grid reveal in" style="margin-top:20px;" id="premiumGrid"></div>
   </div>
 </section>
+<br><br><br>
 
 <!-- ============ JOURNAL (BOOK STYLE) ============ -->
 <section class="page" id="page-journal">
@@ -1684,7 +1742,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
 
   <div class="section-head reveal" style="margin:60px 0 20px"><h2 style="font-size:1.6rem">Pages you've kept</h2></div><div class="entries-list reveal" id="entriesList"></div>
 </section>
-
+<br><br>
 <!-- ============ KINDNESS WALL ============ -->
 <section class="page" id="page-kindness">
   <div class="page-hero reveal">
@@ -1708,10 +1766,11 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
     </div>
     <div id="kindnessVideoList" style="margin-top:12px"></div>
   </div>
+<br><br>
 
   <div class="kindness-feed" id="kindnessFeed"></div>
 </section>
-
+<br><br>
 <!-- ============ SAFETY / GUIDELINES ============ -->
 <section class="page" id="page-safety">
   <div class="page-hero reveal">
@@ -1785,7 +1844,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
     </div>
   </div>
 </section>
-
+<br><br>
 <!-- ============ COMMUNITY ============ -->
 <section class="page" id="page-community">
   <div class="page-hero reveal">
@@ -1831,7 +1890,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
 
   <div class="section-head reveal"><h2 style="font-size:1.6rem">Contact the team</h2></div>
   <div class="contact-cards-grid reveal" id="contactCardsGrid"></div>
-</section>
+</section><br><br>
 
 <footer class="site-footer">
   <div class="footer-grid">
@@ -2747,7 +2806,139 @@ function resetShift(){
   }
   shiftReady = false;
 }
+/* ============================================================
+   DR. BLOOM — supportive listening conversation
+============================================================ */
+const DOCTOR_API_URL = 'http://localhost:4000/api/doctor-chat'; // optional real backend; falls back locally if absent
+let doctorMessages = [];
+let doctorUserText = [];
 
+function openDoctorChat(){
+  document.getElementById('doctorOverlay').classList.add('open');
+  if(!doctorMessages.length){
+    doctorMessages.push({from:'doc', text:"Hi, I'm glad you're here. Tell me what's been sitting heavy on your mind — take your time, share as much or as little as feels right."});
+    renderDoctorFeed();
+  }
+}
+function closeDoctorChat(){ document.getElementById('doctorOverlay').classList.remove('open'); }
+
+function renderDoctorFeed(){
+  const feed = document.getElementById('doctorFeed');
+  feed.innerHTML = doctorMessages.map(m=>`
+    <div class="doctor-msg ${m.from==='me'?'me':'doc'}">
+      ${m.from==='doc' ? '<span class="doc-tag">Dr. Bloom</span>' : ''}
+      ${escapeHtml(m.text)}
+    </div>`).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function sendToDoctor(){
+  const inp = document.getElementById('doctorInput');
+  const text = inp.value.trim();
+  if(!text) return;
+  doctorMessages.push({from:'me', text});
+  doctorUserText.push(text);
+  inp.value = '';
+  renderDoctorFeed();
+  showDoctorTyping();
+  setTimeout(()=>{
+    hideDoctorTyping();
+    doctorMessages.push({from:'doc', text: pickAcknowledgement()});
+    renderDoctorFeed();
+  }, 900+Math.random()*500);
+}
+
+function askDoctorForThoughts(){
+  if(!doctorUserText.length){ toast('Share a little first so Dr. Bloom understands your situation'); return; }
+  showDoctorTyping();
+  generateDoctorSummary(doctorUserText.join(' ')).then(reply=>{
+    hideDoctorTyping();
+    doctorMessages.push({from:'doc', text: reply});
+    renderDoctorFeed();
+  });
+}
+function showDoctorTyping(){
+  const feed = document.getElementById('doctorFeed');
+  const el = document.createElement('div');
+  el.className='doctor-typing'; el.id='doctorTypingEl';
+  el.textContent = 'Dr. Bloom is reading through what you shared...';
+  feed.appendChild(el);
+  feed.scrollTop = feed.scrollHeight;
+}
+function hideDoctorTyping(){
+  const el = document.getElementById('doctorTypingEl');
+  if(el) el.remove();
+}
+
+const DOC_ACK = [
+  "I hear you. Keep going if there's more to it.",
+  "Thank you for trusting me with that. What else is part of this?",
+  "That makes sense. Is there anything underneath that feeling too?",
+  "I'm following. Take your time with the rest."
+];
+function pickAcknowledgement(){ return DOC_ACK[Math.floor(Math.random()*DOC_ACK.length)]; }
+
+/* theme detection — local fallback so this works with zero backend */
+const DOC_THEMES = {
+  anxious: {words:['anxious','anxiety','worried','worry','panic','nervous','overthink','scared','afraid'],
+    validate:"It sounds like your mind has been running ahead of you, bracing for things that haven't happened yet.",
+    reframe:"Anxiety often means you care deeply about getting something right — that instinct isn't the enemy, it just needs somewhere calmer to land.",
+    affirm:"You've gotten through every anxious moment so far. That's a track record worth trusting."},
+  selfworth: {words:['worthless','failure','not good enough','stupid','hate myself','no one likes me','not enough','disappointment'],
+    validate:"That inner voice sounds exhausting to carry around — like nothing you do gets to just be enough.",
+    reframe:"Struggling doesn't make you a failure; it makes you someone in the middle of something hard, which is a very different thing.",
+    affirm:"Your worth was never something you had to earn in the first place."},
+  lonely: {words:['alone','lonely','isolated','no friends','nobody understands','left out','disconnected'],
+    validate:"Feeling unseen by the people around you is one of the heaviest kinds of tired.",
+    reframe:"Loneliness usually says more about circumstance than about your worth of connection.",
+    affirm:"You are someone worth knowing, even on the days it doesn't feel that way."},
+  overwhelmed: {words:['too much','can\'t cope','exhausted','burnt out','burnout','overwhelmed','drowning'],
+    validate:"It sounds like you've been holding a lot at once, with very little room to set any of it down.",
+    reframe:"Needing rest isn't falling behind — it's what lets you keep going sustainably.",
+    affirm:"You don't have to carry everything today for it to still get done eventually."},
+  body: {words:['fat','ugly','my body','my weight','the mirror','my skin','my appearance'],
+    validate:"It's hard when your relationship with your own reflection feels like a fight instead of a truce.",
+    reframe:"Your body has been doing its best to carry you through all of this, whether or not it looks the way you wish it did.",
+    affirm:"You are allowed to feel at home in your body without it needing to change first."},
+  grief: {words:['lost','miss him','miss her','passed away','grief','died','gone now'],
+    validate:"That's a real, heavy loss to be sitting with — grief doesn't move in a straight line.",
+    reframe:"Missing someone this much is really just love that hasn't found anywhere new to go yet.",
+    affirm:"You're allowed to still be grieving, for as long as you need to."},
+  angry: {words:['angry','furious','rage','hate them','frustrated','so mad'],
+    validate:"That anger sounds like it's protecting something underneath — usually a boundary that got crossed.",
+    reframe:"Anger isn't the opposite of calm; it's often just calm asking to be heard.",
+    affirm:"Your feelings are valid data, even the sharp ones."}
+};
+function detectDoctorThemes(text){
+  const lower = text.toLowerCase();
+  const found = [];
+  for(const [key, t] of Object.entries(DOC_THEMES)){
+    if(t.words.some(w=>lower.includes(w))) found.push(t);
+  }
+  return found.length ? found.slice(0,2) : [DOC_THEMES.overwhelmed]; // gentle default
+}
+function buildLocalDoctorReply(fullText){
+  const themes = detectDoctorThemes(fullText);
+  const validate = themes.map(t=>t.validate).join(' ');
+  const reframe = themes.map(t=>t.reframe).join(' ');
+  const affirm = themes[0].affirm;
+  return `Thank you for walking me through all of that — here's what I'm hearing, and what I want you to sit with:\n\n${validate}\n\n${reframe}\n\nSo before anything else: ${affirm}\n\nYou can bring the rest of this into Perspective Shift above whenever you're ready to reframe it in your own words.`;
+}
+
+/* tries a real backend first (same pattern as your feedback form), falls back locally */
+async function generateDoctorSummary(fullText){
+  try{
+    const res = await fetch(DOCTOR_API_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text: fullText })
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.reply) return data.reply;
+    }
+  }catch(e){ /* no backend running — that's fine */ }
+  return buildLocalDoctorReply(fullText);
+}
 let breatheCycle = 0, breatheTimer = null, breatheCallback = null;
 function openBreathingGate(callback){
   breatheCallback = callback;
