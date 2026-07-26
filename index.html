@@ -32,6 +32,10 @@ body{
   overflow-x:hidden;
   min-height:100vh;
 }
+.spacer-sm{height:20px;}
+.spacer-md{height:40px;}
+.spacer-lg{height:70px;}
+.page{padding-bottom:80px;}
 ::-webkit-scrollbar{width:10px;}
 ::-webkit-scrollbar-track{background:var(--petal);}
 ::-webkit-scrollbar-thumb{background:linear-gradient(var(--terracotta),var(--sage));border-radius:10px;border:2px solid var(--petal);}
@@ -232,8 +236,15 @@ img{max-width:100%;display:block;}
 .filter-tab{padding:9px 20px;border-radius:30px;border:1.5px solid rgba(42,33,24,.15);font-size:.85rem;font-weight:600;transition:.25s;}
 .filter-tab:hover{border-color:var(--terracotta);}
 .filter-tab.active{background:var(--terracotta);border-color:var(--terracotta);color:#fff;}
-.masonry{columns:3 280px;column-gap:22px;max-width:1200px;margin:0 auto;}
-.story-item{break-inside:avoid;background:#fff;border-radius:20px;padding:26px;margin-bottom:22px;box-shadow:var(--shadow-soft);transition:transform .3s ease, box-shadow .3s ease;}
+.masonry{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;max-width:1200px;margin:0 auto;align-items:start;}
+.story-item{background:#fff;border-radius:20px;padding:26px;box-shadow:var(--shadow-soft);transition:transform .3s ease, box-shadow .3s ease;height:400px;display:flex;flex-direction:column;overflow:hidden;}
+.story-item .cat-tag{flex-shrink:0;}
+.story-item h3{flex-shrink:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.story-item p.body{flex-shrink:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.story-item .meta{flex-shrink:0;}
+.story-item .story-actions{flex-shrink:0;}
+.story-item .comments-box{flex:1;min-height:0;overflow-y:auto;}
+.story-item .comments-box.open{display:block;}
 .story-item:hover{transform:translateY(-5px);box-shadow:var(--shadow-lift);}
 .story-item .cat-tag{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 12px;border-radius:20px;margin-bottom:14px;}
 .story-item p.body{font-size:.94rem;color:#4a4030;margin-bottom:16px;}
@@ -759,7 +770,7 @@ body.evening .memory-card{
   .hero h1{font-size:2.6rem;}
   .hero-stack{width:100%;max-width:340px;height:340px;}
   .footer-grid{grid-template-columns:1fr 1fr;}
-  .masonry{columns:1;}
+.masonry{grid-template-columns:1fr;}
   .shift-cols{grid-template-columns:1fr;}
   .option-grid{grid-template-columns:1fr;}
   .book-pages{grid-template-columns:1fr;}
@@ -1886,7 +1897,8 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
     <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center" id="fbSubmitBtn">Send feedback</button>
     <p id="fbStatusMsg" style="text-align:center;font-size:.82rem;margin-top:12px;color:#5c5142"></p>
   </form>
-
+<div class="section-head reveal" style="margin-top:60px"><h2 style="font-size:1.6rem">Feedback wall</h2></div>
+<div class="kindness-feed" id="feedbackWall"></div>
   <div class="section-head reveal"><h2 style="font-size:1.6rem">Contact the team</h2></div>
   <div class="contact-cards-grid reveal" id="contactCardsGrid"></div>
 </section>
@@ -3955,25 +3967,19 @@ async function submitFeedback(e){
   const statusEl = document.getElementById('fbStatusMsg');
   btn.disabled = true; btn.textContent = 'Sending...';
 
-  const payload = { name, email, message, time: Date.now() };
-  let sentToServer = false;
   try{
-    const res = await fetch(FEEDBACK_API_URL, {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
+    await addDoc(collection(db, 'feedback'), {
+      name, email, message, createdAt: serverTimestamp()
     });
-    if(res.ok) sentToServer = true;
-  }catch(err){ sentToServer = false; }
-
-  const stored = DB.get('bloom_feedback', []);
-  stored.unshift(payload);
-  DB.set('bloom_feedback', stored);
+    statusEl.textContent = 'Thank you — your feedback is now on the wall ✓';
+    toast('Feedback posted 💛');
+  }catch(err){
+    statusEl.textContent = 'Something went wrong saving that — please try again.';
+  }
 
   btn.disabled = false; btn.textContent = 'Send feedback';
   document.getElementById('feedbackForm').reset();
-  statusEl.textContent = sentToServer
-    ? 'Thank you — your feedback reached our team ✓'
-    : 'Thank you — saved locally. (Run a feedback server to send this to a real backend.)';
-  toast('Feedback sent 💛');
 }
 
 const CONTACT_TEAM = [
@@ -3992,6 +3998,21 @@ function renderContactCards(){
       <div class="contact-role">${escapeHtml(c.role)}</div>
       <div class="contact-email">${escapeHtml(c.email)}</div>
     </div>`).join('');
+}
+function initFeedbackWall(){
+  const { db, collection, query, orderBy, onSnapshot } = window.BloomFB;
+  const q = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'));
+  onSnapshot(q, (snap)=>{
+    const wall = document.getElementById('feedbackWall');
+    if(!wall) return;
+    wall.innerHTML = snap.docs.map(d=>{
+      const f = d.data();
+      return `<div class="kindness-card">
+        <p>"${escapeHtml(f.message)}"</p>
+        <div class="k-time">— ${escapeHtml(f.name)}</div>
+      </div>`;
+    }).join('');
+  });
 }
 //modqueue
 function renderModQueue(){
