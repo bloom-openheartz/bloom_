@@ -239,9 +239,22 @@ img{max-width:100%;display:block;}
 .masonry{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;max-width:1200px;margin:0 auto;align-items:start;}
 .story-item{background:#fff;border-radius:20px;padding:26px;box-shadow:var(--shadow-soft);transition:transform .3s ease, box-shadow .3s ease;height:400px;display:flex;flex-direction:column;overflow:hidden;}
 .story-item .cat-tag{flex-shrink:0;}
-.story-item h3{flex-shrink:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.story-item p.body{flex-shrink:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
-.story-item .meta{flex-shrink:0;}
+.story-item h3{
+  flex-shrink:0;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.story-item p.body{
+  flex-shrink:0;
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}.story-item .meta{flex-shrink:0;}
 .story-item .story-actions{flex-shrink:0;}
 .story-item .comments-box{flex:1;min-height:0;overflow-y:auto;}
 .story-item .comments-box.open{display:block;}
@@ -2818,7 +2831,7 @@ function resetShift(){
 /* ============================================================
    DR. BLOOM — supportive listening conversation
 ============================================================ */
-const DOCTOR_API_URL = 'http://localhost:4000/api/doctor-chat'; // optional real backend; falls back locally if absent
+const DOCTOR_API_URL = 'http://localhost:4000/api/doctor-chat'; 
 let doctorMessages = [];
 let doctorUserText = [];
 
@@ -5227,25 +5240,7 @@ function renderGrowthPlant(){
       <div class="gp-bar"><i style="width:${score}%"></i></div>
     </div>`;
 }
-/* ============================================================
-   BLOOM — STREAK, COINS & MONTHLY-CYCLE MODULE
-   Paste this whole block into your <script> section,
-   ideally right BEFORE the line:  init();
-   ============================================================
-   WHAT THIS DOES
-   - Coins: earned from mini-games (bubble/memory/petal/scramble)
-   - Streak: daily habit-completion streak (reuses your existing
-     computeStreak() logic, but now persists across days properly)
-   - Monthly cap: once a streak hits 30 days, it "completes" —
-     gets stamped as a finished badge with a unique id, and a
-     BRAND NEW streak cycle starts at 0 (never the same cycle twice)
-   - Break detection: if the user misses a day (had an active
-     streak yesterday, nothing done today by the time they open
-     the app), we fire a soft, quietly-flirty notification and
-     deduct coins as a light "penalty"
-   - Recovery: user can spend earned game-coins to instantly
-     restore/repair the broken streak (once per break)
-   ============================================================ */
+
 
 /* ---------- storage ---------- */
 function getCoins(){ return DB.get('bloom_coins', 0); }
