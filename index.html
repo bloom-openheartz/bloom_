@@ -2112,7 +2112,6 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
 <div class="toast" id="toast"></div>
 
 <script>
-    
 document.getElementById('yearNow').textContent = new Date().getFullYear();
 const DB = {
   get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
