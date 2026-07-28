@@ -1015,8 +1015,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
 <body><script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
@@ -1033,8 +1032,7 @@ import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTim
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential, where, getDocs, updateDoc, doc };
-
+window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, GoogleAuthProvider, signInWithCredential, where, getDocs, updateDoc, doc, deleteDoc };
   window.handleCredentialResponse = async function(response){
     try{
       const credential = GoogleAuthProvider.credential(response.credential);
@@ -3047,10 +3045,43 @@ function subscribeToRoom(room){
     feed.innerHTML = snap.docs.map(d=>{
       const m = d.data();
       const mine = currentUser && m.name === currentUser.name;
-      return `<div class="msg ${mine?'me':''}"><div class="meta">${escapeHtml(m.name||'Guest')}</div><div>${escapeHtml(m.text||'')}</div></div>`;
+      return `<div class="msg ${mine?'me':''}">
+        <div class="meta">${escapeHtml(m.name||'Guest')} ${m.edited ? '<span style="opacity:.6;font-size:10px">(edited)</span>' : ''}
+        ${mine ? `<span style="cursor:pointer;opacity:.7;margin-left:8px" onclick="editRoomMsg('${room.replace(/'/g,"\\'")}','${d.id}')" title="Edit">✎</span>
+        <span style="cursor:pointer;opacity:.7;margin-left:6px" onclick="deleteRoomMsg('${room.replace(/'/g,"\\'")}','${d.id}')" title="Delete">🗑</span>` : ''}
+        </div>
+        <div id="msgtext-${d.id}">${escapeHtml(m.text||'')}</div>
+      </div>`;
     }).join('');
     feed.scrollTop = feed.scrollHeight;
   });
+}
+
+async function deleteRoomMsg(room, msgId){
+  if(!confirm('Delete this message?')) return;
+  const { db, doc, deleteDoc } = window.BloomFB;
+  await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+  toast('Message deleted');
+}
+
+function editRoomMsg(room, msgId){
+  const textEl = document.getElementById('msgtext-'+msgId);
+  if(!textEl) return;
+  const current = textEl.textContent;
+  textEl.innerHTML = `<div style="display:flex;gap:6px;margin-top:4px">
+    <input id="editinput-${msgId}" value="${current.replace(/"/g,'&quot;')}" style="flex:1;padding:6px 10px;border-radius:10px;border:1px solid #ddd;">
+    <button class="btn btn-sage" style="padding:6px 12px" onclick="saveRoomMsgEdit('${room.replace(/'/g,"\\'")}','${msgId}')">Save</button>
+  </div>`;
+  document.getElementById('editinput-'+msgId).focus();
+}
+
+async function saveRoomMsgEdit(room, msgId){
+  const inp = document.getElementById('editinput-'+msgId);
+  const text = inp ? inp.value.trim() : '';
+  if(!text) return;
+  const { db, doc, updateDoc } = window.BloomFB;
+  await updateDoc(doc(db, 'rooms', room, 'messages', msgId), { text, edited: true });
+  toast('Message updated');
 }
 function switchRoom(r){ chatState.room=r; persistChat(); initChatIfNeeded(); }
 async function sendMsg(){
@@ -3189,13 +3220,50 @@ function renderGirlsChatFeed(){
   const msgs = (girlsChatState.messages[girlsChatState.room] || []).filter(m=>!isBlocked(m.name));
   feed.innerHTML = msgs.map(m=>`
     <div class="msg ${m.name==='You'?'me':''}">
-      <div class="meta">${escapeHtml(m.name)} ${m.name!=='You' ? `<span style="cursor:pointer;opacity:.55;margin-left:6px" onclick="msgMenu(${m.id},'${m.name}',&quot;${escapeHtml(m.text)}&quot;)" title="Report or block">⋯</span>` : ''}</div>
-      <div>${escapeHtml(m.text)}</div>
+      <div class="meta">${escapeHtml(m.name)} ${m.edited ? '<span style="opacity:.6;font-size:10px">(edited)</span>' : ''}
+        ${m.name==='You' ? `
+          <span style="cursor:pointer;opacity:.7;margin-left:6px" onclick="editGirlsMsg(${m.id})" title="Edit">✎</span>
+          <span style="cursor:pointer;opacity:.7;margin-left:6px" onclick="deleteGirlsMsg(${m.id})" title="Delete">🗑</span>
+        ` : `<span style="cursor:pointer;opacity:.55;margin-left:6px" onclick="msgMenu(${m.id},'${m.name}',&quot;${escapeHtml(m.text)}&quot;)" title="Report or block">⋯</span>`}
+      </div>
+      <div id="girlsmsgtext-${m.id}">${escapeHtml(m.text)}</div>
       <div class="reactions">
         ${['💗','✨','🌸'].map(e=>`<span onclick="reactGirls(${m.id},'${e}')">${e} ${m.reactions && m.reactions[e] ? m.reactions[e] : ''}</span>`).join('')}
       </div>
     </div>`).join('');
   feed.scrollTop = feed.scrollHeight;
+}
+
+function deleteGirlsMsg(id){
+  if(!confirm('Delete this message?')) return;
+  const msgs = girlsChatState.messages[girlsChatState.room] || [];
+  girlsChatState.messages[girlsChatState.room] = msgs.filter(m=>m.id!==id);
+  persistGirlsChat();
+  renderGirlsChatFeed();
+  toast('Message deleted');
+}
+
+function editGirlsMsg(id){
+  const textEl = document.getElementById('girlsmsgtext-'+id);
+  if(!textEl) return;
+  const current = textEl.textContent;
+  textEl.innerHTML = `<div style="display:flex;gap:6px;margin-top:4px">
+    <input id="geditinput-${id}" value="${current.replace(/"/g,'&quot;')}" style="flex:1;padding:6px 10px;border-radius:10px;border:1px solid #ddd;">
+    <button class="btn btn-sage" style="padding:6px 12px" onclick="saveGirlsMsgEdit(${id})">Save</button>
+  </div>`;
+  document.getElementById('geditinput-'+id).focus();
+}
+
+function saveGirlsMsgEdit(id){
+  const inp = document.getElementById('geditinput-'+id);
+  const text = inp ? inp.value.trim() : '';
+  if(!text) return;
+  const msgs = girlsChatState.messages[girlsChatState.room] || [];
+  const m = msgs.find(x=>x.id===id);
+  if(m){ m.text = text; m.edited = true; }
+  persistGirlsChat();
+  renderGirlsChatFeed();
+  toast('Message updated');
 }
 function reactGirls(id, emoji){
   const msgs = girlsChatState.messages[girlsChatState.room] || [];
