@@ -2259,6 +2259,7 @@ function navigate(page, skipSave){
   if(page==='journal') { initJournal(); }
   if(page==='kindness') { initKindness(); }
   if(page==='musicroom') { initMusicRoom(); }
+  if(page==='community') { initFeedbackWall(); }
   if(page==='auth') { renderGoogleButton(); }
   triggerReveal();
 }
@@ -3104,13 +3105,15 @@ function blockUser(name){
   if(name==='You') return;
   if(!blockedUsers.includes(name)){ blockedUsers.push(name); DB.set('bloom_blockedUsers', blockedUsers); }
   toast(name+' is blocked — their messages are now hidden.');
-  renderChatFeed(); renderGirlsChatFeed();
+  if(chatState.room) subscribeToRoom(chatState.room);
+  renderGirlsChatFeed();
 }
 function unblockUser(name){
   blockedUsers = blockedUsers.filter(n=>n!==name);
   DB.set('bloom_blockedUsers', blockedUsers);
   toast(name+' unblocked.');
-  renderChatFeed(); renderGirlsChatFeed();
+  if(chatState.room) subscribeToRoom(chatState.room);
+  renderGirlsChatFeed();
 }
 function reportMessage(name, text){
   const reports = DB.get('bloom_reports', []);
