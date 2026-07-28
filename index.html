@@ -3107,7 +3107,7 @@ async function sendMsg(){
     text,
     createdAt: serverTimestamp()
 });
-
+  }
 let blockedUsers = DB.get('bloom_blockedUsers', []);
 function isBlocked(name){ return blockedUsers.includes(name); }
 function blockUser(name){
