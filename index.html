@@ -3045,7 +3045,7 @@ function subscribeToRoom(room){
     if(!feed) return;
     feed.innerHTML = snap.docs.map(d=>{
       const m = d.data();
-      const mine = currentUser && m.name === currentUser.name;
+    const mine = currentUser && m.uid === currentUser.email;
       return `<div class="msg ${mine?'me':''}">
         <div class="meta">${escapeHtml(m.name||'Guest')} ${m.edited ? '<span style="opacity:.6;font-size:10px">(edited)</span>' : ''}
         ${mine ? `<span style="cursor:pointer;opacity:.7;margin-left:8px" onclick="editRoomMsg('${room.replace(/'/g,"\\'")}','${d.id}')" title="Edit">✎</span>
@@ -3058,10 +3058,20 @@ function subscribeToRoom(room){
   });
 }
 
-async function deleteRoomMsg(room, msgId){
-  if(!confirm('Delete this message?')) return;
+function deleteRoomMsg(room, msgId){
+  showModal(`
+    <h3>Delete this message?</h3>
+    <p style="opacity:.8;margin-bottom:16px;">This can't be undone.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmDeleteRoomMsg('${room.replace(/'/g,"\\'")}','${msgId}')">Delete</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal('premiumModal')">Cancel</button>
+    </div>
+  `);
+}
+async function confirmDeleteRoomMsg(room, msgId){
   const { db, doc, deleteDoc } = window.BloomFB;
   await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+  closeModal('premiumModal');
   toast('Message deleted');
 }
 
@@ -3092,12 +3102,11 @@ async function sendMsg(){
   if(!text) return;
   const { db, collection, addDoc, serverTimestamp } = window.BloomFB;
   await addDoc(collection(db, 'rooms', chatState.room, 'messages'), {
-    name: currentUser ? currentUser.name : 'Guest',
+    name: currentUser.name,
+    uid: currentUser.email,
     text,
     createdAt: serverTimestamp()
-  });
-  inp.value = '';
-}
+});
 
 let blockedUsers = DB.get('bloom_blockedUsers', []);
 function isBlocked(name){ return blockedUsers.includes(name); }
@@ -3238,11 +3247,21 @@ function renderGirlsChatFeed(){
 }
 
 function deleteGirlsMsg(id){
-  if(!confirm('Delete this message?')) return;
+  showModal(`
+    <h3>Delete this message?</h3>
+    <p style="opacity:.8;margin-bottom:16px;">This can't be undone.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmDeleteGirlsMsg(${id})">Delete</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal('premiumModal')">Cancel</button>
+    </div>
+  `);
+}
+function confirmDeleteGirlsMsg(id){
   const msgs = girlsChatState.messages[girlsChatState.room] || [];
   girlsChatState.messages[girlsChatState.room] = msgs.filter(m=>m.id!==id);
   persistGirlsChat();
   renderGirlsChatFeed();
+  closeModal('premiumModal');
   toast('Message deleted');
 }
 
