@@ -2900,7 +2900,7 @@ const DOC_ACK = [
 ];
 function pickAcknowledgement(){ return DOC_ACK[Math.floor(Math.random()*DOC_ACK.length)]; }
 
-/* theme detection — local fallback so this works with zero backend */
+
 const DOC_THEMES = {
   anxious: {words:['anxious','anxiety','worried','worry','panic','nervous','overthink','scared','afraid'],
     validate:"It sounds like your mind has been running ahead of you, bracing for things that haven't happened yet.",
@@ -3081,10 +3081,21 @@ function deleteRoomMsg(room, msgId){
   `);
 }
 async function confirmDeleteRoomMsg(room, msgId){
-  const { db, doc, deleteDoc } = window.BloomFB;
-  await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+
+  const msgEl = document.getElementById('msgtext-'+msgId);
+  if(msgEl && msgEl.closest('.msg')) msgEl.closest('.msg').remove();
+
   closeModal('premiumModal');
-  toast('Message deleted');
+
+  const { db, doc, deleteDoc } = window.BloomFB;
+  try{
+    await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+    toast('Message deleted');
+  }catch(err){
+    console.error('Delete failed:', err);
+    toast('Delete failed — message restored');
+    subscribeToRoom(room); 
+  }
 }
 
 function editRoomMsg(room, msgId){
