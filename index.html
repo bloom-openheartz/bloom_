@@ -3081,10 +3081,6 @@ function deleteRoomMsg(room, msgId){
   `);
 }
 async function confirmDeleteRoomMsg(room, msgId){
-
-  const msgEl = document.getElementById('msgtext-'+msgId);
-  if(msgEl && msgEl.closest('.msg')) msgEl.closest('.msg').remove();
-
   closeModal('premiumModal');
 
   const { db, doc, deleteDoc } = window.BloomFB;
@@ -3093,11 +3089,9 @@ async function confirmDeleteRoomMsg(room, msgId){
     toast('Message deleted');
   }catch(err){
     console.error('Delete failed:', err);
-    toast('Delete failed — message restored');
-    subscribeToRoom(room); 
+    toast('Delete failed — please try again');
   }
 }
-
 function editRoomMsg(room, msgId){
   const textEl = document.getElementById('msgtext-'+msgId);
   if(!textEl) return;
@@ -3279,14 +3273,19 @@ function deleteGirlsMsg(id){
     </div>
   `);
 }
-function confirmDeleteGirlsMsg(id){
-  const msgs = girlsChatState.messages[girlsChatState.room] || [];
-  girlsChatState.messages[girlsChatState.room] = msgs.filter(m=>m.id!==id);
-  persistGirlsChat();
-  renderGirlsChatFeed();
+async function confirmDeleteRoomMsg(room, msgId){
   closeModal('premiumModal');
-  toast('Message deleted');
+
+  const { db, doc, deleteDoc } = window.BloomFB;
+  try{
+    await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+    toast('Message deleted');
+  }catch(err){
+    console.error('Delete failed:', err);
+    toast('Delete failed — please try again');
+  }
 }
+
 
 function editGirlsMsg(id){
   const textEl = document.getElementById('girlsmsgtext-'+id);
