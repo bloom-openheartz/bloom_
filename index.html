@@ -3041,13 +3041,25 @@ function pageChat(){
     </div>
   </div>`;
 }
-let unsubscribeRoom = null;
-function initChatIfNeeded(){
-  const container = document.getElementById('chatRoomContainer');
-  if(!container) return;
-  container.innerHTML = pageChat();
-  subscribeToRoom(chatState.room);
-}
+unsubscribeRoom = onSnapshot(q, (snap)=>{
+  const feed = document.getElementById('chatFeed');
+  if(!feed) return;
+  feed.innerHTML = snap.docs
+    .filter(d => !d.data().deleted)          // hide soft-deleted
+    .map(d=>{
+      const m = d.data();
+      const mine = currentUser && m.uid === currentUser.email;
+      return `<div class="msg ${mine?'me':''}">
+        <div class="meta">${escapeHtml(m.name||'Guest')} ${m.edited ? '<span style="opacity:.6;font-size:10px">(edited)</span>' : ''}
+        ${mine ? `<span style="cursor:pointer;opacity:.7;margin-left:8px" onclick="editRoomMsg('${room.replace(/'/g,"\\'")}','${d.id}')" title="Edit">✎</span>
+        <span style="cursor:pointer;opacity:.7;margin-left:6px" onclick="deleteRoomMsg('${room.replace(/'/g,"\\'")}','${d.id}')" title="Delete">🗑</span>` : ''}
+        </div>
+        <div id="msgtext-${d.id}">${escapeHtml(m.text||'')}</div>
+      </div>`;
+    }).join('');
+  feed.scrollTop = feed.scrollHeight;
+});
+
 function subscribeToRoom(room){
   if(unsubscribeRoom) unsubscribeRoom();
   const { db, collection, query, orderBy, onSnapshot } = window.BloomFB;
@@ -3082,16 +3094,26 @@ function deleteRoomMsg(room, msgId){
 }
 async function confirmDeleteRoomMsg(room, msgId){
   closeModal('premiumModal');
+  const { db, doc, updateDoc } = window.BloomFB;
 
-  const { db, doc, deleteDoc } = window.BloomFB;
+  // Optimistic: hide immediately so it doesn't "come back"
+  const node = document.getElementById('msgtext-'+msgId);
+  if (node && node.parentElement) node.parentElement.style.display = 'none';
+
   try{
-    await deleteDoc(doc(db, 'rooms', room, 'messages', msgId));
+    await updateDoc(doc(db, 'rooms', room, 'messages', msgId), {
+      deleted: true,
+      text: '',
+      deletedAt: Date.now()
+    });
     toast('Message deleted');
   }catch(err){
     console.error('Delete failed:', err);
+    if (node && node.parentElement) node.parentElement.style.display = '';
     toast('Delete failed — please try again');
   }
 }
+
 function editRoomMsg(room, msgId){
   const textEl = document.getElementById('msgtext-'+msgId);
   if(!textEl) return;
