@@ -2934,7 +2934,18 @@ function handleSignin(){
   toast('Welcome back, '+u.name.split(' ')[0]+' ✨');
   navigate('home');
 }function renderGoogleButton(){
-  if (window.google && window.google.accounts && window.google.accounts.id && window.BLOOM_CFG && window.BLOOM_CFG.googleClientId) {
+  if (window.google?.accounts?.id && window.BLOOM_CFG?.googleClientId) {
+    const target = document.getElementById('googleSignInDiv');
+    if(target){
+      google.accounts.id.renderButton(target, { type:'standard', theme:'outline', size:'large', width: 300 });
+    }
+  } else {
+    setTimeout(renderGoogleButton, 200);
+  }
+}
+
+function renderGoogleButton(){
+  if (window.google?.accounts?.id && window.BLOOM_CFG?.googleClientId) {
     google.accounts.id.initialize({
       client_id: window.BLOOM_CFG.googleClientId,
       callback: (resp) => window.handleCredentialResponse?.(resp),
@@ -2947,30 +2958,6 @@ function handleSignin(){
   } else {
     setTimeout(renderGoogleButton, 200);
   }
-
-
-}
-function initGoogleAuthWhenReady(){
-  if (window.google?.accounts?.id && window.BLOOM_CFG?.googleClientId) {
-   google.accounts.id.initialize({
-    client_id: window.BLOOM_CFG.googleClientId,
-    callback: (resp) => window.handleCredentialResponse?.(resp),
-    use_fedcm_for_prompt: true
-});
-  } else {
-    setTimeout(initGoogleAuthWhenReady, 200);
-  }
-}
-initGoogleAuthWhenReady();
-function signOut(){
-  currentUser = null;
-  DB.set('bloom_currentUser', null);
-  DB.set('bloom_privacyAgreed', false);
-  renderNavRight();
-  const menu = document.getElementById('userMenu'); if(menu) menu.classList.remove('open');
-  toast('Signed out. See you soon 🌿');
-  navigate('home');
-  maybeShowPrivacyGate();
 }
 const GARDEN_LINES = [
   "You stopped negotiating with your reflection today.",
