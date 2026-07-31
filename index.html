@@ -269,6 +269,17 @@ img{max-width:100%;display:block;}
 .story-actions button.liked{color:var(--terracotta);}
 .comments-box{margin-top:14px;display:none;}
 .comments-box.open{display:block;animation:pageIn .3s ease;}
+.story-item.expanded{
+  grid-column: span 2;
+  height:auto;
+  max-height:none;
+}
+.story-item.expanded .comments-box{
+  display:block;
+  max-height:400px;
+  overflow-y:auto;
+}
+@media(max-width:700px){ .story-item.expanded{ grid-column: span 1; } }
 .comment{background:var(--petal);border-radius:12px;padding:10px 14px;margin-top:10px;font-size:.85rem;}
 .comment .c-head{display:flex;justify-content:space-between;font-weight:700;font-size:.78rem;color:var(--terracotta);margin-bottom:4px;}
 .reply{margin-left:20px;margin-top:8px;background:#fff;border:1px solid var(--petal);}
@@ -276,8 +287,7 @@ img{max-width:100%;display:block;}
 .comment-form input{flex:1;border:1px solid var(--petal);border-radius:20px;padding:8px 14px;font-size:.85rem;}
 .reply-link{font-size:.72rem;color:var(--sage);font-weight:700;cursor:pointer;margin-top:4px;display:inline-block;}
 .fab{position:fixed;bottom:130px;right:30px;z-index:800;width:60px;height:60px;border-radius:50%;background:var(--sage);color:#fff;font-size:1.6rem;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lift);transition:transform .3s;}
-.fab:hover{transform:scale(1.1) rotate(90deg);}
-
+.fab:hover{transform:scale(1.1)}
 .modal-overlay{position:fixed;inset:0;background:rgba(42,33,24,.5);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
 .modal-overlay.open{display:flex;animation:fadeIn .25s ease;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
@@ -503,6 +513,15 @@ body.evening .msg{background:#3a2c26;}
 }
 .rain-drop{border-radius:0 0 2px 2px;}
 
+
+.ambient-fireroom{position:fixed;bottom:0;left:0;right:0;height:220px;pointer-events:none;z-index:2;opacity:0;transition:opacity 1.2s ease;overflow:hidden;background:linear-gradient(180deg, rgba(20,14,10,0) 0%, rgba(20,14,10,.85) 55%, rgba(12,8,6,.95) 100%);}
+.ambient-fireroom.on{opacity:1;}
+.fr-chimney{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;height:200px;background:#3a2c26;border-radius:14px 14px 0 0;box-shadow:0 -6px 0 #2a201b inset;}
+.fr-mantle{position:absolute;bottom:118px;left:50%;transform:translateX(-50%);width:220px;height:14px;background:#5c4634;border-radius:4px;}
+.fr-firebox{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:140px;height:100px;background:#1a1210;border-radius:8px 8px 0 0;box-shadow:inset 0 0 30px rgba(0,0,0,.8);}
+.fr-glow{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:260px;height:180px;background:radial-gradient(ellipse at center bottom, rgba(255,140,60,.55), transparent 72%);animation:fpGlowPulse 2.4s ease-in-out infinite;}
+.fr-flame{position:absolute;bottom:8px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:linear-gradient(to top, var(--terracotta), var(--gold) 55%, #fff2cf);animation:fpFlick 1s ease-in-out infinite alternate;}
+.fr-log{position:absolute;bottom:6px;height:10px;background:#4a2e1c;border-radius:6px;box-shadow:0 0 6px rgba(255,120,40,.4);}
 /* ---------- realistic forest: bigger trees, grass, animals ---------- */
 .ambient-grass{position:fixed;bottom:0;left:0;right:0;height:34px;pointer-events:none;
   background:linear-gradient(180deg, rgba(98,133,113,0) 0%, rgba(70,105,80,.55) 100%);
@@ -541,24 +560,26 @@ body.evening .msg{background:#3a2c26;}
     from{ left:-60px; }
   to{ left:110vw; }
 }
-/* ---------- fireplace ambient ---------- */
-.ambient-fireplace{position:fixed;bottom:0;left:0;right:0;height:140px;pointer-events:none;z-index:2;opacity:0;transition:opacity 1s ease;overflow:hidden;}
-.ambient-fireplace.on{opacity:1;}
-.ambient-fireplace .fp-glow{position:absolute;bottom:0;left:0;right:0;height:100%;background:radial-gradient(ellipse at center bottom, rgba(255,140,60,.5), transparent 70%);animation:fpGlowPulse 2.4s ease-in-out infinite;}
-@keyframes fpGlowPulse{0%,100%{opacity:.75;}50%{opacity:1;}}
-.ambient-fireplace .fp-flame{position:absolute;bottom:6px;width:14px;height:44px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:linear-gradient(to top, var(--terracotta), var(--gold) 55%, #fff2cf);animation:fpFlick 1s ease-in-out infinite alternate;}
-@keyframes fpFlick{0%{transform:scaleY(1) translateY(0) rotate(-3deg);opacity:.9;}100%{transform:scaleY(1.3) translateY(-5px) rotate(3deg);opacity:1;}}
-.ambient-ember{position:absolute;bottom:14px;width:4px;height:4px;border-radius:50%;background:#ffbf6b;box-shadow:0 0 6px 2px rgba(255,180,90,.6);pointer-events:none;animation:emberRise linear forwards;}
-@keyframes emberRise{0%{transform:translateY(0) translateX(0) scale(1);opacity:1;}100%{transform:translateY(-220px) translateX(var(--ex,10px)) scale(.3);opacity:0;}}
 
+
+.ambient-waterfall{position:fixed;bottom:0;right:4%;width:180px;height:100%;pointer-events:none;z-index:2;opacity:0;transition:opacity 1s ease;overflow:hidden;}
+.ambient-waterfall.on{opacity:1;}
+.wf-rock{position:absolute;bottom:0;background:#6b5c4f;border-radius:40% 40% 0 0;}
+.wf-stream{position:absolute;top:0;width:6px;background:linear-gradient(to bottom, rgba(210,235,245,.9), rgba(160,205,225,.7));border-radius:0 0 4px 4px;animation:wfFall linear infinite;}
+@keyframes wfFall{0%{transform:translateY(-100%) scaleY(.8);opacity:.9;}100%{transform:translateY(400px) scaleY(1.1);opacity:.5;}}
+.wf-mist{position:absolute;bottom:30px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.55), transparent 70%);filter:blur(6px);animation:wfMist 3s ease-in-out infinite;}
+@keyframes wfMist{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:.8;transform:scale(1.3);}}
+.wf-pool{position:absolute;bottom:0;left:0;right:0;height:26px;background:linear-gradient(180deg, rgba(160,205,225,.5), rgba(90,140,165,.6));border-radius:50%;}
 /* ---------- wind chimes ambient ---------- */
 .ambient-chimes{position:fixed;top:96px;right:6%;width:110px;height:150px;pointer-events:none;z-index:2;opacity:0;transition:opacity 1s ease;}
 .ambient-chimes.on{opacity:1;}
 .ambient-chimes svg{width:100%;height:100%;display:block;overflow:visible;}
-.chime-rod{transform-box:fill-box;transform-origin:top center;animation:chimeSway 2.8s ease-in-out infinite;}
-.chime-rod:nth-child(2){animation-delay:.25s;}
-.chime-rod:nth-child(3){animation-delay:.5s;}
-.chime-rod:nth-child(4){animation-delay:.75s;}
+.chime-rod{transform-box:fill-box;transform-origin:top center;animation:chimeSway 2.2s ease-in-out infinite;}
+.chime-rod:nth-child(2){animation-duration:2.6s;}
+.chime-rod:nth-child(3){animation-duration:1.9s;}
+.chime-rod:nth-child(4){animation-duration:2.4s;}
+@keyframes chimeFrameSway{0%,100%{transform:rotate(-2deg);}50%{transform:rotate(2deg);}}
+.ambient-chimes svg{animation:chimeFrameSway 3.4s ease-in-out infinite;transform-origin:55px 14px;}
 @keyframes chimeSway{0%,100%{transform:rotate(-7deg);}50%{transform:rotate(7deg);}}
 .chime-note{position:absolute;font-size:13px;opacity:0;pointer-events:none;animation:chimeNoteFloat 2.4s ease-out forwards;color:var(--gold);}
 @keyframes chimeNoteFloat{0%{transform:translateY(0) scale(.6);opacity:0;}20%{opacity:1;}100%{transform:translateY(-54px) scale(1.15);opacity:0;}}
@@ -577,6 +598,7 @@ body.evening .msg{background:#3a2c26;}
 .premium-ribbon{position:absolute;top:14px;right:-34px;transform:rotate(45deg);background:linear-gradient(90deg,var(--gold),#e88a3c);color:#2A2118;font-size:10.5px;font-weight:800;letter-spacing:1.5px;padding:4px 42px;box-shadow:0 4px 10px rgba(0,0,0,.2);}
 .premium-thumb{height:100px;border-radius:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--petal);}
 .premium-arcade .games-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:20px;}
+@media(max-width:900px){ #gameSideAppreciation{ display:none; } }
 .game-stage{display:none;max-width:760px;margin:0 auto;text-align:center;}
 .game-stage.active{display:block;animation:pageIn .4s ease;}
 .game-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
@@ -2079,7 +2101,7 @@ window.BloomFB = { db, collection, addDoc, onSnapshot, query, orderBy, serverTim
   <button class="sound-btn" id="soundRain" onclick="setSoundscape('rain')" title="Rain">🌧️</button>
   <button class="sound-btn" id="soundOcean" onclick="setSoundscape('ocean')" title="Ocean">🌊</button>
   <button class="sound-btn" id="soundForest" onclick="setSoundscape('forest')" title="Forest">🌲</button>
-  <button class="sound-btn" id="soundWaterfall" onclick="setSoundscape('waterfall')" title="Waterfall">💦</button>
+  <button class="sound-btn" id="soundWaterfall" onclick="setSoundscape('waterfall')" title="Waterfall">💧</button>
   <button class="sound-btn" id="soundChimes" onclick="setSoundscape('chimes')" title="Wind Chimes">🎐</button>
   <button class="sound-btn" id="soundFireplace" onclick="setSoundscape('fireplace')" title="Fireplace">🔥</button>
 </div>
@@ -2581,6 +2603,24 @@ function toggleBgMusic(){
   else { stopBgMusic(); toast('Background music off'); }
   renderNavRight();
 }
+
+const AFFIRM_KEYWORDS = {
+  low: ['tired','sad','heavy','can\'t','hard day','exhausted','down','crying','hurt'],
+  high: ['excited','great','proud','happy','good day','accomplished','confident'],
+  confidence: ['doubt','unsure','not sure of myself','insecure','second-guessing'],
+  body: ['body','weight','mirror','appearance','skin','look'],
+  belonging: ['alone','left out','don\'t belong','outsider','disconnected']
+};
+function detectAffirmContext(text){
+  const lower = text.toLowerCase();
+  let mood = null, theme = null;
+  if(AFFIRM_KEYWORDS.low.some(w=>lower.includes(w))) mood='low';
+  else if(AFFIRM_KEYWORDS.high.some(w=>lower.includes(w))) mood='high';
+  if(AFFIRM_KEYWORDS.body.some(w=>lower.includes(w))) theme='body';
+  else if(AFFIRM_KEYWORDS.belonging.some(w=>lower.includes(w))) theme='belonging';
+  else if(AFFIRM_KEYWORDS.confidence.some(w=>lower.includes(w))) theme='confidence';
+  return {mood, theme};
+}
 const AFFIRMATION_DATA = {
   low: {
     confidence: ["Even at your quietest, you are not less worthy of love.", "Rest is not a betrayal of your goals — it's part of them.", "You don't have to earn softness today."],
@@ -2784,7 +2824,10 @@ function toggleLike(id){
   renderStories();
 }
 function toggleComments(id){
-  document.getElementById('comments-'+id).classList.toggle('open');
+  const box = document.getElementById('comments-'+id);
+  const card = box.closest('.story-item');
+  box.classList.toggle('open');
+  card.classList.toggle('expanded', box.classList.contains('open'));
 }
 function toggleReplyForm(sid,cid){
   const el = document.getElementById('replyform-'+sid+'-'+cid);
@@ -3068,7 +3111,32 @@ function skipBreathing(){
 }
 let unsubscribeRoom = null;
 const ROOMS = ['Body Image','Anxiety Support','Career & Purpose','Relationships','Late Night Thoughts','Wins & Gratitude'];
-const MEMBERS = ['Sam','Noor','Dee','Alex','Riya','Priya','Kai','Wren'];
+let onlineUsers = [];
+function subscribeToPresence(){
+  if(!currentUser) return;
+  const { db, doc, collection, query, onSnapshot, updateDoc, serverTimestamp } = window.BloomFB;
+  // heartbeat: mark self online
+  const presenceRef = doc(db, 'presence', currentUser.email);
+  window.BloomFB.updateDoc ? null : null;
+  import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(({setDoc})=>{
+    setDoc(presenceRef, { name: currentUser.name, lastSeen: serverTimestamp() }, {merge:true});
+    setInterval(()=> setDoc(presenceRef, { name: currentUser.name, lastSeen: serverTimestamp() }, {merge:true}), 30000);
+  });
+  const q = query(collection(db,'presence'));
+  onSnapshot(q, (snap)=>{
+    const now = Date.now();
+    onlineUsers = snap.docs
+      .map(d=>({name:d.data().name, lastSeen:d.data().lastSeen?.toMillis?.()||0}))
+      .filter(u=> now - u.lastSeen < 90000); // online within last 90s
+    renderOnlineList();
+  });
+}
+function renderOnlineList(){
+  const el = document.querySelector('.chat-online');
+  if(!el) return;
+  el.innerHTML = `<h4 style="margin-top:0;">Online (${onlineUsers.length})</h4>` +
+    onlineUsers.map(m=>`<div class="online-user"><span class="dot-online"></span>${escapeHtml(m.name)}</div>`).join('');
+}
 let chatState = LS.get('bloom_chatState', null) || { room:'Body Image', messages:{}, dms:{} };
 ROOMS.forEach(r=>{ if(!chatState.messages[r]) chatState.messages[r] = seedRoomMsgs(r); });
 function seedRoomMsgs(room){
@@ -3105,8 +3173,8 @@ function pageChat(){
       </div>
     </div>
     <div class="chat-online">
-      <h4 style="margin-top:0;">Online (${MEMBERS.length})</h4>
-      ${MEMBERS.map(m=>`<div class="online-user" onclick="openDM('${m}')"><span class="dot-online"></span>${m}</div>`).join('')}
+      <h4 style="margin-top:0;">Online (0)</h4>
+      ${currentUser ? '' : '<p style="font-size:.8rem;color:#8a8072">Sign in to see who\'s online.</p>'}
     </div>
   </div>`;
 }
@@ -3115,6 +3183,7 @@ function initChatIfNeeded(){
   if(!container) return;
   container.innerHTML = pageChat();
   subscribeToRoom(chatState.room);
+  subscribeToPresence();
 }
 function subscribeToRoom(room){
   if(unsubscribeRoom) unsubscribeRoom();
@@ -3624,35 +3693,66 @@ function setAmbientVisual(kind, on){
     specs.forEach(s=>{ const el=document.getElementById(s.id); if(el) el.remove(); });
   }
 }
-
- if(kind==='fireplace'){
-    if(on){
-      if(!document.getElementById('ambientFireplace')){
-        let flames='';
-        for(let i=0;i<7;i++) flames += `<div class="fp-flame" style="left:${8+i*14}px;animation-delay:${(i*0.13).toFixed(2)}s;height:${30+Math.random()*20}px"></div>`;
-        layer.insertAdjacentHTML('beforeend', `<div class="ambient-fireplace" id="ambientFireplace"><div class="fp-glow"></div>${flames}</div>`);
+if(kind==='waterfall'){
+  if(on){
+    if(!document.getElementById('ambientWaterfall')){
+      let streams='';
+      for(let i=0;i<10;i++){
+        streams += `<div class="wf-stream" style="left:${20+i*15}px;height:${70+Math.random()*15}%;animation-duration:${0.6+Math.random()*0.4}s;animation-delay:${(Math.random()*0.5).toFixed(2)}s"></div>`;
       }
-      document.getElementById('ambientFireplace').classList.add('on');
-      if(!window._emberInterval){
-        window._emberInterval = setInterval(()=>{
-          const fp = document.getElementById('ambientFireplace');
-          if(!fp) return;
-          const e = document.createElement('div');
-          e.className='ambient-ember';
-          e.style.left = (10+Math.random()*100)+'px';
-          e.style.setProperty('--ex', (Math.random()*30-15)+'px');
-          e.style.animationDuration = (2+Math.random()*1.5)+'s';
-          fp.appendChild(e);
-          setTimeout(()=>e.remove(), 3600);
-        }, 260);
+      let mist='';
+      for(let i=0;i<5;i++){
+        mist += `<div class="wf-mist" style="left:${10+i*30}px;width:60px;height:60px;animation-delay:${(i*0.4).toFixed(2)}s"></div>`;
       }
-    } else {
-      const fp = document.getElementById('ambientFireplace');
-      if(fp) fp.classList.remove('on');
-      if(window._emberInterval){ clearInterval(window._emberInterval); window._emberInterval=null; }
-      setTimeout(()=>{ if(fp) fp.remove(); }, 1000);
+      layer.insertAdjacentHTML('beforeend', `<div class="ambient-waterfall" id="ambientWaterfall">
+        <div class="wf-rock" style="left:0;width:40px;height:60%;"></div>
+        <div class="wf-rock" style="right:0;width:50px;height:45%;"></div>
+        ${streams}${mist}
+        <div class="wf-pool"></div>
+      </div>`);
     }
+    document.getElementById('ambientWaterfall').classList.add('on');
+  } else {
+    const wf = document.getElementById('ambientWaterfall');
+    if(wf){ wf.classList.remove('on'); setTimeout(()=>wf.remove(), 1000); }
   }
+}if(kind==='fireplace'){
+  if(on){
+    if(!document.getElementById('ambientFireroom')){
+      let flames='';
+      for(let i=0;i<7;i++) flames += `<div class="fr-flame" style="left:${74+i*13}px;width:12px;height:${28+Math.random()*22}px;animation-delay:${(i*0.13).toFixed(2)}s"></div>`;
+      layer.insertAdjacentHTML('beforeend', `<div class="ambient-fireroom" id="ambientFireroom">
+        <div class="fr-chimney"></div>
+        <div class="fr-mantle"></div>
+        <div class="fr-glow"></div>
+        <div class="fr-firebox">
+          <div class="fr-log" style="left:20px;width:60px;"></div>
+          <div class="fr-log" style="left:55px;width:55px;"></div>
+          ${flames}
+        </div>
+      </div>`);
+    }
+    document.getElementById('ambientFireroom').classList.add('on');
+    if(!window._emberInterval){
+      window._emberInterval = setInterval(()=>{
+        const fr = document.getElementById('ambientFireroom');
+        if(!fr) return;
+        const e = document.createElement('div');
+        e.className='ambient-ember';
+        e.style.left = (140+Math.random()*40)+'px';
+        e.style.setProperty('--ex', (Math.random()*30-15)+'px');
+        e.style.animationDuration = (2+Math.random()*1.5)+'s';
+        fr.appendChild(e);
+        setTimeout(()=>e.remove(), 3600);
+      }, 260);
+    }
+  } else {
+    const fr = document.getElementById('ambientFireroom');
+    if(fr) fr.classList.remove('on');
+    if(window._emberInterval){ clearInterval(window._emberInterval); window._emberInterval=null; }
+    setTimeout(()=>{ if(fr) fr.remove(); }, 1200);
+  }
+}
   if(kind==='chimes'){
     if(on){
       if(!document.getElementById('ambientChimes')){
@@ -3679,7 +3779,7 @@ function setAmbientVisual(kind, on){
           n.style.top = (80+Math.random()*30)+'px';
           c.appendChild(n);
           setTimeout(()=>n.remove(), 2500);
-        }, 1500+Math.random()*900);
+    }, 900+Math.random()*700);
       }
     } else {
       const c = document.getElementById('ambientChimes');
@@ -4742,8 +4842,22 @@ const gameMoveCounters = {};
 function trackGameMove(gameKey){
   gameMoveCounters[gameKey] = (gameMoveCounters[gameKey]||0) + 1;
   if(gameMoveCounters[gameKey] % 2 === 0){
-    setTimeout(()=>toast(APPRECIATION_LINES[Math.floor(Math.random()*APPRECIATION_LINES.length)]), 350);
+    showGameSideAppreciation();
   }
+}
+function showGameSideAppreciation(){
+  let panel = document.getElementById('gameSideAppreciation');
+  if(!panel){
+    panel = document.createElement('div');
+    panel.id = 'gameSideAppreciation';
+    panel.style.cssText = 'position:fixed;top:50%;right:24px;transform:translateY(-50%);background:#fff;border-radius:16px;padding:14px 18px;box-shadow:var(--shadow-lift);max-width:200px;font-size:.85rem;color:var(--ink);z-index:950;opacity:0;transition:opacity .35s ease, transform .35s ease;border-left:4px solid var(--sage);';
+    document.body.appendChild(panel);
+  }
+  panel.textContent = APPRECIATION_LINES[Math.floor(Math.random()*APPRECIATION_LINES.length)];
+  panel.style.opacity='1';
+  panel.style.transform='translateY(-50%) translateX(0)';
+  clearTimeout(window._gameSideAppTimer);
+  window._gameSideAppTimer = setTimeout(()=>{ panel.style.opacity='0'; panel.style.transform='translateY(-50%) translateX(20px)'; }, 3200);
 }
 let currentGame = null;
 let gameCleanupFn = null;
@@ -4991,12 +5105,36 @@ function initJigsawGame(stage){
         <button data-n="4">Medium (4×4)</button>
         <button data-n="5">Hard (5×5)</button>
       </div>
-      <div id="jigsawBoard" style="display:grid;gap:2px;max-width:420px;aspect-ratio:1;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-soft);"></div>
-      <p class="game-msg" id="jigsawMsg" style="margin-top:14px;color:#8a8072;font-size:13.5px;">Click two pieces to swap them. Rebuild the landscape!</p>
+      <div id="jigsawBoard" style="display:grid;gap:2px;max-width:420px;aspect-ratio:1;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-soft);background:#F5D9A8;"></div>
+      <p class="game-msg" id="jigsawMsg" style="margin-top:14px;color:#8a8072;font-size:13.5px;">Click two pieces to swap them. Rebuild the kitty!</p>
     </div>`;
   const board = document.getElementById('jigsawBoard');
   const msg = document.getElementById('jigsawMsg');
-  const bgCss = 'linear-gradient(180deg,#AEDFF7 0%,#CDEAE0 35%,#8FCB9E 55%,#5EA36E 70%,#3E7A52 100%)';
+
+  // Original cat-with-basket character, drawn fresh for this puzzle (not copied from any photo/illustration)
+  const catSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+    <rect width='100' height='100' fill='%23F5D9A8'/>
+    <ellipse cx='50' cy='90' rx='22' ry='4' fill='%23000000' opacity='.08'/>
+    <path d='M32 55 Q28 30 38 20 Q42 28 44 34 Q50 24 50 16 Q56 24 56 34 Q62 26 62 20 Q70 30 68 55 Z' fill='%23FFFFFF'/>
+    <ellipse cx='50' cy='58' rx='19' ry='17' fill='%23FFFFFF'/>
+    <path d='M35 50 Q50 62 65 50' stroke='%23F2A6B8' stroke-width='2' fill='none' opacity='.5'/>
+    <ellipse cx='42' cy='55' rx='2.6' ry='3.4' fill='%232A2118'/>
+    <ellipse cx='58' cy='55' rx='2.6' ry='3.4' fill='%232A2118'/>
+    <circle cx='41' cy='53.5' r='.7' fill='%23fff'/>
+    <circle cx='57' cy='53.5' r='.7' fill='%23fff'/>
+    <ellipse cx='34' cy='60' rx='3.2' ry='2.2' fill='%23F2A6B8' opacity='.6'/>
+    <ellipse cx='66' cy='60' rx='3.2' ry='2.2' fill='%23F2A6B8' opacity='.6'/>
+    <path d='M46 61 Q50 64 54 61' stroke='%232A2118' stroke-width='1.6' fill='none' stroke-linecap='round'/>
+    <path d='M50 61 L50 58' stroke='%232A2118' stroke-width='1.6' stroke-linecap='round'/>
+    <path d='M18 58 Q10 76 22 92 Q26 84 24 70' fill='%23FFFFFF'/>
+    <path d='M35 70 Q50 62 65 70 L67 92 Q50 100 33 92 Z' fill='%23E8894A'/>
+    <path d='M35 70 Q50 78 65 70 L65 76 Q50 84 35 76 Z' fill='%23F2A968'/>
+    <ellipse cx='38' cy='73' rx='2' ry='2.4' fill='%23C96B2E' opacity='.7'/>
+    <ellipse cx='50' cy='69' rx='2' ry='2.4' fill='%23C96B2E' opacity='.7'/>
+    <ellipse cx='62' cy='73' rx='2' ry='2.4' fill='%23C96B2E' opacity='.7'/>
+  </svg>`;
+  const bgCss = `url("data:image/svg+xml,${catSvg}")`;
+
   let n = 3, pieces = [], selected = null;
 
   function build(size){
@@ -5027,14 +5165,18 @@ function initJigsawGame(stage){
       [pieces[selected], pieces[pos]] = [pieces[pos], pieces[selected]];
       selected = null; render();
       trackGameMove('jigsaw');
-      if(isSolved()){ msg.textContent='🎉 Beautifully solved! Try a harder difficulty?'; playChime(); awardGameCoins('jigsaw', 0); }
+      if(isSolved()){
+        msg.textContent='🎉 You rebuilt the kitty! Try a harder difficulty?';
+        playChime();
+        awardGameCoins('jigsaw', 0);
+      }
     }
   }
   document.querySelectorAll('.jigsaw-diff button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.jigsaw-diff button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      msg.textContent = 'Click two pieces to swap them. Rebuild the landscape!';
+      msg.textContent = 'Click two pieces to swap them. Rebuild the kitty!';
       build(parseInt(btn.dataset.n,10));
     });
   });
