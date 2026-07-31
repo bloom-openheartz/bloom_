@@ -1293,17 +1293,17 @@ body.intro-locked{overflow:hidden;height:100vh;}
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-  const firebaseConfig = {
-    apiKey: "@secret:GOOGLE_API_KEY",
-    authDomain: "bloom-502919.firebaseapp.com",
+const firebaseConfig = {
+  apiKey: "YOUR_REAL_FIREBASE_API_KEY",
+  authDomain: "bloom-502919.firebaseapp.com",
     projectId: "bloom-502919",
     storageBucket: "bloom-502919.firebasestorage.app",
     messagingSenderId: "694570223930",
     appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
     measurementId: "G-X71P8BWN5R"
   };
+window.BLOOM_CFG = { googleClientId: "YOUR_REAL_CLIENT_ID.apps.googleusercontent.com" };
 
-  window.BLOOM_CFG = { googleClientId: "@secret:GOOGLE_OAUTH_CLIENT_ID" };
 
   const app = initializeApp(firebaseConfig);
   try{ getAnalytics(app); }catch(e){ /* analytics is non-essential */ }
