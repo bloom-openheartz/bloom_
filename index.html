@@ -907,6 +907,28 @@ body.evening .memory-card{
 
 @media(max-width:1350px){ .nav-links{gap:6px;} .nav-links a{font-size:.7rem;} }
 @media(max-width:900px){
+  .exit-btn{
+  position:fixed;
+  top:16px;
+  right:16px;
+  z-index:6000;
+  background:var(--ink);
+  color:#fff;
+  padding:7px 14px;
+  border-radius:20px;
+  font-size:.72rem;
+  font-weight:700;
+  opacity:.85;
+  transition:.2s;
+}
+@media(max-width:900px){
+  .exit-btn{
+    top:auto;
+    bottom:16px;
+    right:16px;
+    left:auto;
+  }
+}
   .nav-links{display:none;}
   .hamburger{display:flex;}
   .hero{flex-direction:column;text-align:center;}
@@ -1621,7 +1643,7 @@ body.intro-play .hero-stack .card-c{animation-delay:.70s}
 
 <nav class="navbar" id="navbar">
     <div class="nav-logo" onclick="navigate('home')" style="cursor:pointer">🌿 Bloom<span class="dot"></span></div>
-  <div class="nav-links" id="navLinks">
+<div class="nav-links" id="navLinks">
     <a href="#" onclick="navClick(event,'home');" data-page="home">Home</a>
     <a href="#" onclick="navClick(event,'affirmations');" data-page="affirmations">Affirmations</a>
     <a href="#" onclick="navClick(event,'wall');" data-page="wall">Wall of Stories</a>
@@ -1633,7 +1655,7 @@ body.intro-play .hero-stack .card-c{animation-delay:.70s}
     <a href="#" onclick="navClick(event,'kindness');" data-page="kindness">Kindness Wall</a>
     <a href="#" onclick="navClick(event,'musicroom');" data-page="musicroom">Music Room</a>
     <a href="#" onclick="navClick(event,'community');" data-page="community">Community</a>
-  </div>
+</div>
   <div class="nav-right" id="navRight">
     <button class="btn btn-ghost" id="nightToggle" onclick="toggleNightMode()" title="Toggle cozy night mode" style="padding:8px 12px;">🌙</button>
   </div>
@@ -2763,6 +2785,7 @@ function toggleMobileNav(){
   const open = links.classList.toggle('mobile-open');
   backdrop.classList.toggle('show', open);
   btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if(open) links.scrollTop = 0;  
 }
 function closeMobileNav(){
   document.getElementById('navLinks').classList.remove('mobile-open');
@@ -2944,6 +2967,7 @@ function signOut(){
   toast('Signed out 🌿');
   navigate('home');
 }
+
 let googleInitialized = false;
 function renderGoogleButton(){
   if (window.google?.accounts?.id && window.BLOOM_CFG?.googleClientId) {
