@@ -2935,7 +2935,15 @@ function handleSignin(){
   toast('Welcome back, '+u.name.split(' ')[0]+' ✨');
   navigate('home');
 }
-
+function signOut(){
+  currentUser = null;
+  DB.set('bloom_currentUser', null);
+  const menu = document.getElementById('userMenu');
+  if(menu) menu.classList.remove('open');
+  renderNavRight();
+  toast('Signed out 🌿');
+  navigate('home');
+}
 let googleInitialized = false;
 function renderGoogleButton(){
   if (window.google?.accounts?.id && window.BLOOM_CFG?.googleClientId) {
