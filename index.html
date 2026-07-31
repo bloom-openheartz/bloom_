@@ -686,9 +686,15 @@ body.evening .msg{background:#3a2c26;}
 .game-hud{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:0 16px;font-weight:600;color:var(--ink);}
 .game-canvas-wrap{position:relative;height:420px;background:linear-gradient(180deg,#fdf5ef,#f8e7da);border-radius:24px;overflow:hidden;box-shadow:var(--shadow-soft);margin:0 auto;max-width:760px;}
 .petal-basket{position:absolute;bottom:16px;width:60px;height:36px;border-radius:18px 18px 12px 12px;background:linear-gradient(180deg,#f7c6d9,#f1a7cc);box-shadow:0 12px 26px rgba(189,107,79,.18);}
-.mandala-svg{width:100%;max-width:420px;margin:0 auto;display:block;height:auto;filter:drop-shadow(0 18px 30px rgba(42,33,24,.15));}
-.mandala-petal{cursor:pointer;transition:fill .25s ease, transform .25s ease;}
-.mandala-petal:hover{transform:scale(1.03);}
+.mandala-svg{width:100%;max-width:420px;margin:0 auto;display:block;height:auto;}
+.mandala-shape{cursor:pointer;}
+.mandala-shape:hover{fill-opacity:.82;}
+.mandala-tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:10px auto 14px;max-width:520px;}
+.mandala-swatch{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 10px rgba(42,33,24,.16);cursor:pointer;padding:0;}
+.mandala-swatch.active{outline:2px solid var(--gold);outline-offset:2px;transform:scale(1.12);}
+.mandala-chip{font-size:.8rem;padding:7px 13px;border-radius:999px;background:#fff;box-shadow:var(--shadow-soft);cursor:pointer;font-weight:600;color:var(--ink);}
+.mandala-chip.on{background:var(--sage);color:#fff;}
+.star-canvas{width:100%;height:100%;display:block;touch-action:manipulation;}
 #bubblePopZone{position:relative;height:400px;background:linear-gradient(180deg,var(--sage-soft),var(--petal));border-radius:24px;overflow:hidden;box-shadow:var(--shadow-soft);}
 .bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.9),rgba(122,158,138,.5));box-shadow:0 4px 14px rgba(122,158,138,.4);transition:transform .15s;}
 .bubble:hover{transform:scale(1.1);}
@@ -1040,8 +1046,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
   transition:transform .25s ease, background .25s ease, color .25s ease;
 }
 .intro-close:hover{background:#fff;color:var(--terracotta);transform:translateY(-2px)}
-/* graceful exit choreography */
-/* exit = the orange gives you a wink and the whole screen blinks shut. no blur. */
+
 .intro-overlay{clip-path:inset(0 0 0 0 round 0);}
 .intro-overlay.shrink{transform:scale(1.015);}
 .intro-overlay.shrink .intro-stagecard{
@@ -1289,7 +1294,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
+    apiKey: "@secret:GOOGLE_API_KEY",
     authDomain: "bloom-502919.firebaseapp.com",
     projectId: "bloom-502919",
     storageBucket: "bloom-502919.firebasestorage.app",
@@ -1298,7 +1303,7 @@ body.intro-locked{overflow:hidden;height:100vh;}
     measurementId: "G-X71P8BWN5R"
   };
 
-  window.BLOOM_CFG = { googleClientId: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com" };
+  window.BLOOM_CFG = { googleClientId: "@secret:GOOGLE_OAUTH_CLIENT_ID" };
 
   const app = initializeApp(firebaseConfig);
   try{ getAnalytics(app); }catch(e){ /* analytics is non-essential */ }
@@ -2153,7 +2158,7 @@ body.intro-play .hero-stack .card-c{animation-delay:.70s}
     <div class="deco-plant" style="width:66px;height:80px;right:4%;top:10px"><svg><use href="#plantC"/></svg></div>
     <span class="eyebrow">let some energy out</span>
     <h1>Mini Games</h1>
-    <p>Six tiny, unserious games for when your brain needs somewhere else to point itself.</p>
+    <p>Eight tiny, unserious games for when your brain needs somewhere else to point itself.</p>
   </div>
   <div class="games-grid reveal" id="gamesMenu">
     <div class="game-card" onclick="openGame('bubble')"><div class="g-icon">🫧</div><h3>Bubble Pop</h3><p>Pop calm bubbles before they drift away.</p></div>
@@ -2162,6 +2167,7 @@ body.intro-play .hero-stack .card-c{animation-delay:.70s}
     <div class="game-card" onclick="openGame('petal')"><div class="g-icon">🌸</div><h3>Petal Catch</h3><p>Catch falling petals with a basket before time runs out.</p></div>
     <div class="game-card" onclick="openGame('jigsaw')"><div class="g-icon">🧩</div><h3>Jigsaw Puzzle</h3><p>Rebuild a peaceful landscape, piece by piece.</p></div>
     <div class="game-card" onclick="openGame('mandala')"><div class="g-icon">🎨</div><h3>Color the Mandala</h3><p>Tap petals to shift their colors and create a gentle design.</p></div>
+   <div class="game-card" onclick="openGame('lantern')"><div class="g-icon">🏮</div><h3>Lantern Sky</h3><p>Write down what you're ready to release, and watch it drift into your own night sky.</p></div>
     <div class="game-card" onclick="openGame('scramble')"><div class="g-icon">🔤</div><h3>Gratitude Scramble</h3><p>Unscramble small, warm words.</p></div>
   </div>
 
@@ -2181,6 +2187,7 @@ body.intro-play .hero-stack .card-c{animation-delay:.70s}
   <div class="game-stage" id="gamestage-petal"></div>
   <div class="game-stage" id="gamestage-jigsaw"></div>
   <div class="game-stage" id="gamestage-mandala"></div>
+  <div class="game-stage" id="gamestage-lantern"></div>
   <div class="game-stage" id="gamestage-scramble">
     <div class="game-topbar"><button class="btn btn-ghost" onclick="closeGame()">← All games</button><span class="game-score">Solved: <span id="scrambleScore">0</span></span></div>
     <div class="scramble-letters" id="scrambleLetters"></div>
@@ -3067,45 +3074,78 @@ let bgMusicNodes = null;
 let bgMusicTimer = null;
 function startBgMusic(){
   const ctx = getAudioCtx();
+
+  /* ---- soft, warm master chain: very gentle level + heavy low-pass so
+     nothing sharp or nerve-tingling ever reaches the ears ---- */
   const master = ctx.createGain();
   master.gain.setValueAtTime(0.0001, ctx.currentTime);
-  master.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 3);
+  master.gain.exponentialRampToValueAtTime(0.055, ctx.currentTime + 6);
 
-  const warm = ctx.createBiquadFilter(); warm.type='lowpass'; warm.frequency.value=2200; warm.Q.value=0.3;
-  master.connect(warm); warm.connect(ctx.destination);
+  const warm = ctx.createBiquadFilter(); warm.type='lowpass'; warm.frequency.value=900; warm.Q.value=0.0001;
+  const soften = ctx.createBiquadFilter(); soften.type='highshelf'; soften.frequency.value=1400; soften.gain.value=-14;
+  master.connect(warm); warm.connect(soften); soften.connect(ctx.destination);
 
-  const delay = ctx.createDelay(); delay.delayTime.value = 0.62;
-  const feedback = ctx.createGain(); feedback.gain.value = 0.32;
-  const delayFilter = ctx.createBiquadFilter(); delayFilter.type='lowpass'; delayFilter.frequency.value=1600;
+  /* long, blurry reverb-ish delay (no metallic slapback) */
+  const delay = ctx.createDelay(4); delay.delayTime.value = 1.35;
+  const feedback = ctx.createGain(); feedback.gain.value = 0.34;
+  const delayFilter = ctx.createBiquadFilter(); delayFilter.type='lowpass'; delayFilter.frequency.value=700;
   delay.connect(feedback); feedback.connect(delayFilter); delayFilter.connect(delay);
-  delay.connect(warm);
+  delay.connect(master);
 
-  const padOsc = ctx.createOscillator(); padOsc.type='sine'; padOsc.frequency.value = 130.81;
-  const padGain = ctx.createGain(); padGain.gain.value = 0.035;
-  padOsc.connect(padGain); padGain.connect(warm);
-  padOsc.start();
+  /* ---- breathing pad: three detuned sines, slow amplitude swell ---- */
+  const padGain = ctx.createGain(); padGain.gain.value = 0.0;
+  padGain.connect(master);
+  padGain.gain.setTargetAtTime(0.05, ctx.currentTime, 5);
 
-  bgMusicNodes = { master, warm, delay, feedback, delayFilter, padOsc, padGain };
+  const padOscs = [130.81, 196.00, 261.63].map((f, i)=>{
+    const o = ctx.createOscillator(); o.type='sine';
+    o.frequency.value = f * (i===1 ? 1.001 : (i===2 ? 0.999 : 1));
+    const g = ctx.createGain(); g.gain.value = i===0 ? 0.5 : 0.26;
+    o.connect(g); g.connect(padGain);
+    o.start();
+    return o;
+  });
+  const padOsc = padOscs[0];
 
-  const SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
-  let prevIdx = 2;
+  /* slow "breath" LFO so the pad rises and falls like calm breathing */
+  const lfo = ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value = 0.055;
+  const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.018;
+  lfo.connect(lfoGain); lfoGain.connect(padGain.gain);
+  lfo.start();
+
+  bgMusicNodes = { master, warm, soften, delay, feedback, delayFilter, padOsc, padOscs, padGain, lfo, lfoGain };
+
+  /* ---- melody: soft pentatonic (no semitone clashes), low register,
+     long attack + long release so notes bloom instead of hitting ---- */
+  const SCALE = [174.61, 196.00, 220.00, 261.63, 293.66, 329.63, 392.00];
+  let prevIdx = 3;
   function playNote(){
     if(!bgMusicNodes) return;
-    const step = [-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)];
+    const step = [-2,-1,-1,0,0,1,1,2][Math.floor(Math.random()*8)];
     prevIdx = Math.max(0, Math.min(SCALE.length-1, prevIdx+step));
     const freq = SCALE[prevIdx];
     const t = ctx.currentTime + 0.05;
-    const osc = ctx.createOscillator(); osc.type='sine';
-    osc.frequency.value = freq;
+
+    const osc = ctx.createOscillator(); osc.type='sine'; osc.frequency.value = freq;
+    /* a whisper of the octave above, like a distant music box */
+    const shimmer = ctx.createOscillator(); shimmer.type='sine'; shimmer.frequency.value = freq*2;
+    const shimmerGain = ctx.createGain(); shimmerGain.gain.value = 0.06;
+
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.11, t + 1.1);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.4);
-    osc.connect(g); g.connect(warm); g.connect(delay);
-    osc.start(t); osc.stop(t + 3.6);
-    bgMusicTimer = setTimeout(playNote, 1800 + Math.random()*1600);
+    g.gain.linearRampToValueAtTime(0.07, t + 2.2);      // slow bloom, no attack "click"
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 7.5); // long, soft fade
+
+    osc.connect(g);
+    shimmer.connect(shimmerGain); shimmerGain.connect(g);
+    g.connect(master); g.connect(delay);
+    osc.start(t); shimmer.start(t);
+    osc.stop(t + 7.8); shimmer.stop(t + 7.8);
+
+    /* lots of space between notes — silence is part of the calm */
+    bgMusicTimer = setTimeout(playNote, 5200 + Math.random()*4200);
   }
-  playNote();
+  setTimeout(()=>{ if(bgMusicNodes) playNote(); }, 1200);
 }
 function stopBgMusic(){
   if(bgMusicTimer){ clearTimeout(bgMusicTimer); bgMusicTimer = null; }
@@ -3120,7 +3160,8 @@ function stopBgMusic(){
     nodes.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
   }catch(e){}
   setTimeout(()=>{
-    try{ nodes.padOsc.stop(); }catch(e){}
+    try{ (nodes.padOscs||[nodes.padOsc]).forEach(o=>{ try{ o.stop(); }catch(e){} }); }catch(e){}
+    try{ nodes.lfo.stop(); }catch(e){}
     Object.values(nodes).forEach(n=>{ try{ n.disconnect(); }catch(e){} });
   }, 1400);
 }
@@ -6193,6 +6234,7 @@ function openGame(g){
   if(g==='petal') initPetalGame(stage);
   if(g==='jigsaw') initJigsawGame(document.getElementById('gamestage-jigsaw'));
   if(g==='mandala') initMandalaGame(stage);
+  if(g==='lantern') initLanternSky(stage);
   if(g==='scramble') startScramble();
 }
 function closeGame(){
@@ -6649,33 +6691,443 @@ function initJigsawGame(stage){
   build(3);
   gameCleanupFn = ()=>{};
 }
-const MANDALA_COLORS = ['#F5EDE4','#BD6B4F','#7A9E8A','#C9963A','#e9b79a','#c9dccf'];
+const MANDALA_COLORS = ['#F5EDE4','#BD6B4F','#7A9E8A','#C9963A','#e9b79a','#c9dccf','#8f6f9e','#4f6d7a','#e4c66b','#2A2118'];
+let mandalaColor = '#BD6B4F';
+let mandalaSymmetry = true;
 function initMandalaGame(stage){
-  const petalCount = 12;
+  const SECTORS = 12, CX = 170, CY = 170;
+  /* three rings per sector -> 36 shapes, built once, painted via delegation
+     (no inline handlers, no CSS transforms/filters => no lag) */
+  const RINGS = [
+    { d:'M170 170 Q192 96 170 34 Q148 96 170 170Z', cls:'ring0' },
+    { d:'M170 170 Q186 124 170 88 Q154 124 170 170Z', cls:'ring1' },
+    { d:'M170 170 Q179 152 170 132 Q161 152 170 170Z', cls:'ring2' }
+  ];
   let paths = '';
-  for(let i=0;i<petalCount;i++){
-    const angle = (360/petalCount)*i;
-    paths += `<path class="mandala-petal" data-idx="${i}" data-ci="0" transform="rotate(${angle} 170 170)" d="M170 170 Q190 90 170 40 Q150 90 170 170Z" fill="${MANDALA_COLORS[0]}" stroke="#fff" stroke-width="2" onclick="mandalaTap(this)"/>`;
+  for(let s=0;s<SECTORS;s++){
+    const angle = (360/SECTORS)*s;
+    RINGS.forEach((r,ri)=>{
+      paths += `<path class="mandala-shape" data-s="${s}" data-r="${ri}" transform="rotate(${angle} ${CX} ${CY})" d="${r.d}" fill="#F5EDE4" stroke="#fff" stroke-width="1.6"/>`;
+    });
   }
-   stage.innerHTML = `<div class="game-topbar"><button class="btn btn-ghost" onclick="closeGame()">← All games</button></div>
-  <div style="text-align:center;">
-    <div class="game-hud" style="justify-content:center;"><span>🎨 Color the Mandala — tap a petal to shift its color</span></div>
-    <svg class="mandala-svg" viewBox="0 0 340 340">
-      <circle cx="170" cy="170" r="150" fill="none" stroke="#e3d9cb" stroke-width="1"/>
-      ${paths}
-      <circle cx="170" cy="170" r="26" fill="var(--gold)" onclick="mandalaReset()"/>
-    </svg>
-    <p style="font-size:12.5px; opacity:.7; margin-top:10px;">Tap the center to start over.</p>
-  </div>`;
-  window.mandalaTap = function(el){
-    let ci = (parseInt(el.dataset.ci)+1) % MANDALA_COLORS.length;
-    el.dataset.ci = ci;
-    el.setAttribute('fill', MANDALA_COLORS[ci]);
-  };
-  window.mandalaReset = function(){ initMandalaGame(stage); };
-  gameCleanupFn = ()=>{ delete window.mandalaTap; delete window.mandalaReset; };
-}
+  const swatches = MANDALA_COLORS.map(c=>
+    `<button class="mandala-swatch${c===mandalaColor?' active':''}" data-c="${c}" style="background:${c}" aria-label="colour ${c}"></button>`
+  ).join('');
 
+  stage.innerHTML = `<div class="game-topbar"><button class="btn btn-ghost" onclick="closeGame()">← All games</button><span class="game-score">Petals painted: <span id="mandalaCount">0</span></span></div>
+  <div style="text-align:center;">
+    <div class="game-hud" style="justify-content:center;"><span>🎨 Pick a colour, then paint the mandala — drag to paint faster</span></div>
+    <div class="mandala-tools" id="mandalaSwatches">${swatches}</div>
+    <div class="mandala-tools">
+      <button class="mandala-chip${mandalaSymmetry?' on':''}" id="mandalaSym">🔁 Symmetry ${mandalaSymmetry?'on':'off'}</button>
+      <button class="mandala-chip" id="mandalaSurprise">🎲 Surprise me</button>
+      <button class="mandala-chip" id="mandalaClear">🧼 Start over</button>
+      <button class="mandala-chip" id="mandalaSave">💾 Save image</button>
+    </div>
+    <svg class="mandala-svg" id="mandalaSvg" viewBox="0 0 340 340">
+      <circle cx="170" cy="170" r="152" fill="#fffdf9" stroke="#e3d9cb" stroke-width="1"/>
+      ${paths}
+      <circle cx="170" cy="170" r="22" id="mandalaCore" fill="#C9963A" stroke="#fff" stroke-width="2"/>
+    </svg>
+    <p style="font-size:12.5px; opacity:.7; margin-top:10px;">Symmetry paints the same petal in every sector at once.</p>
+  </div>`;
+
+  const svg = stage.querySelector('#mandalaSvg');
+  const countEl = stage.querySelector('#mandalaCount');
+  let painted = 0, dragging = false;
+
+  function paint(el){
+    if(!el || !el.classList.contains('mandala-shape')) return;
+    const targets = mandalaSymmetry
+      ? svg.querySelectorAll(`.mandala-shape[data-r="${el.dataset.r}"]`)
+      : [el];
+    let changed = false;
+    targets.forEach(t=>{
+      if(t.getAttribute('fill') !== mandalaColor){ t.setAttribute('fill', mandalaColor); changed = true; }
+    });
+    if(changed){ painted += targets.length; countEl.textContent = painted; mandalaChime(); }
+  }
+  function shapeAt(ev){
+    const t = ev.touches ? document.elementFromPoint(ev.touches[0].clientX, ev.touches[0].clientY) : ev.target;
+    return t;
+  }
+  const onDown = (e)=>{ dragging = true; paint(shapeAt(e)); };
+  const onMove = (e)=>{ if(dragging) paint(shapeAt(e)); };
+  const onUp = ()=>{ dragging = false; };
+  svg.addEventListener('pointerdown', onDown);
+  svg.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+
+  stage.querySelector('#mandalaSwatches').addEventListener('click', (e)=>{
+    const b = e.target.closest('.mandala-swatch'); if(!b) return;
+    mandalaColor = b.dataset.c;
+    stage.querySelectorAll('.mandala-swatch').forEach(s=>s.classList.toggle('active', s===b));
+  });
+  stage.querySelector('#mandalaSym').addEventListener('click', (e)=>{
+    mandalaSymmetry = !mandalaSymmetry;
+    e.currentTarget.classList.toggle('on', mandalaSymmetry);
+    e.currentTarget.textContent = `🔁 Symmetry ${mandalaSymmetry?'on':'off'}`;
+  });
+  stage.querySelector('#mandalaClear').addEventListener('click', ()=>{
+    svg.querySelectorAll('.mandala-shape').forEach(p=>p.setAttribute('fill','#F5EDE4'));
+    painted = 0; countEl.textContent = 0;
+  });
+  stage.querySelector('#mandalaSurprise').addEventListener('click', ()=>{
+    const pick = ()=>MANDALA_COLORS[1+Math.floor(Math.random()*(MANDALA_COLORS.length-1))];
+    const ringColors = [pick(), pick(), pick()];
+    svg.querySelectorAll('.mandala-shape').forEach(p=>p.setAttribute('fill', ringColors[+p.dataset.r]));
+    svg.querySelector('#mandalaCore').setAttribute('fill', pick());
+    painted = 36; countEl.textContent = painted; mandalaChime();
+  });
+  stage.querySelector('#mandalaSave').addEventListener('click', ()=>{
+    try{
+      const data = new XMLSerializer().serializeToString(svg);
+      const url = URL.createObjectURL(new Blob([data], {type:'image/svg+xml'}));
+      const a = document.createElement('a'); a.href = url; a.download = 'my-mandala.svg'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      toast('Saved your mandala 🌼');
+    }catch(err){ toast('Could not save right now'); }
+  });
+
+  let lastChime = 0;
+  function mandalaChime(){
+    const now = Date.now();
+    if(now - lastChime < 220) return;   // throttle: keeps it calm AND light
+    lastChime = now;
+    try{
+      const ctx = getAudioCtx();
+      const o = ctx.createOscillator(); o.type='sine';
+      o.frequency.value = [523.25,587.33,659.25,783.99,880][Math.floor(Math.random()*5)];
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.05, ctx.currentTime+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+1.1);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+1.2);
+    }catch(e){}
+  }
+
+  gameCleanupFn = ()=>{
+    svg.removeEventListener('pointerdown', onDown);
+    svg.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+  };
+}
+function getLanternSky(){ return DB.get('bloom_lanternSky', []); }
+function saveLanternSky(l){ DB.set('bloom_lanternSky', l); }
+
+function initLanternSky(stage){
+  const sky = getLanternSky();
+
+  stage.innerHTML = `
+    <div class="game-topbar">
+      <button class="btn btn-ghost" onclick="closeGame()">← All games</button>
+      <span class="game-score">Lanterns released: <span id="lanternCount">${sky.length}</span></span>
+    </div>
+    <div class="game-hud" style="justify-content:center;"><span id="lanternHint">🏮 Write down what you're ready to let float away tonight.</span></div>
+    <div class="game-canvas-wrap" style="background:linear-gradient(180deg,#0d1230,#1a1f42 45%,#2a2350 78%,#3a2a4a);position:relative;overflow:hidden;">
+      <canvas id="lanternCanvas" class="star-canvas"></canvas>
+      <div id="lanternGlowVignette" style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 90px rgba(0,0,0,.55);"></div>
+    </div>
+    <p id="lanternMsg" style="text-align:center;color:var(--gold);font-family:'Caveat',cursive;font-size:1.35rem;min-height:32px;margin-top:10px;">Every lantern you release becomes a quiet little star in your own sky.</p>
+    <div style="max-width:480px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <input id="lanternInput" maxlength="60" placeholder="something you're ready to release..." style="flex:1;min-width:220px;border:1.5px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:black;border-radius:16px;padding:12px 16px;font-family:inherit;font-size:.92rem;backdrop-filter:blur(6px);" onkeydown="if(event.key==='Enter')releaseLantern()">
+      <button class="btn" style="background:linear-gradient(120deg,#e8a94c,#e8894a);color:#2A2118;font-weight:800;box-shadow:0 8px 22px rgba(232,148,60,.35);" onclick="releaseLantern()">🏮 Release</button>
+    </div>
+    <div class="mandala-tools" style="margin-top:14px;">
+      <button class="mandala-chip" id="lanternClearBtn">🧹 Clear my sky</button>
+    </div>
+  `;
+
+  const canvas = stage.querySelector('#lanternCanvas');
+  const ctx2d = canvas.getContext('2d');
+  const countEl = stage.querySelector('#lanternCount');
+  const msgEl = stage.querySelector('#lanternMsg');
+  const hintEl = stage.querySelector('#lanternHint');
+
+  let W=0, H=0, dpr=1;
+  let bgStars = [];
+  let flying = [];          // lanterns currently rising
+  let embers = [];          // trailing ember particles
+  let placed = sky.slice(); // permanently released lanterns {text,time,nx,ny}
+  let hoveredStar = -1;
+  let raf = null, tStart = performance.now();
+
+  function resize(){
+    const r = canvas.parentElement.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    W = r.width; H = r.height;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    ctx2d.setTransform(dpr,0,0,dpr,0,0);
+    buildBgStars();
+  }
+  function buildBgStars(){
+    const count = Math.floor((W*H)/9000);
+    bgStars = Array.from({length:count}, ()=>({
+      x:Math.random(), y:Math.random()*0.75,
+      r:Math.random()*1.3+.3,
+      tw:Math.random()*Math.PI*2,
+      sp:0.4+Math.random()*0.8
+    }));
+  }
+
+  function drawAurora(t){
+    const bands = [
+      {c:'rgba(122,158,138,.16)', y:.06, amp:18, sp:0.00018, ph:0},
+      {c:'rgba(189,107,79,.12)',  y:.14, amp:24, sp:0.00013, ph:2},
+      {c:'rgba(120,90,200,.14)',  y:.02, amp:14, sp:0.00021, ph:4}
+    ];
+    ctx2d.save();
+    ctx2d.globalCompositeOperation = 'lighter';
+    bands.forEach(b=>{
+      const grad = ctx2d.createLinearGradient(0,0,0,H*0.5);
+      grad.addColorStop(0, b.c);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx2d.fillStyle = grad;
+      ctx2d.beginPath();
+      ctx2d.moveTo(0, H*b.y);
+      for(let x=0;x<=W;x+=24){
+        const y = H*b.y + Math.sin(x*0.01 + t*b.sp + b.ph)*b.amp;
+        ctx2d.lineTo(x,y);
+      }
+      ctx2d.lineTo(W, 0); ctx2d.lineTo(0,0);
+      ctx2d.closePath();
+      ctx2d.fill();
+    });
+    ctx2d.restore();
+  }
+
+  function drawMoon(){
+    const mx = W*0.86, my = H*0.16, mr = Math.min(W,H)*0.06;
+    const glow = ctx2d.createRadialGradient(mx,my,0,mx,my,mr*4);
+    glow.addColorStop(0,'rgba(255,246,220,.35)');
+    glow.addColorStop(1,'rgba(255,246,220,0)');
+    ctx2d.fillStyle = glow;
+    ctx2d.beginPath(); ctx2d.arc(mx,my,mr*4,0,Math.PI*2); ctx2d.fill();
+    ctx2d.fillStyle = '#fdf3d8';
+    ctx2d.shadowBlur = 20; ctx2d.shadowColor='rgba(255,246,220,.8)';
+    ctx2d.beginPath(); ctx2d.arc(mx,my,mr,0,Math.PI*2); ctx2d.fill();
+    ctx2d.shadowBlur = 0;
+  }
+
+  function drawBgStars(t){
+    bgStars.forEach(s=>{
+      const alpha = 0.35 + 0.45*Math.sin(t*0.0012*s.sp + s.tw);
+      ctx2d.fillStyle = `rgba(255,250,235,${Math.max(0,alpha)})`;
+      ctx2d.beginPath();
+      ctx2d.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+      ctx2d.fill();
+    });
+  }
+
+  /* permanently released lanterns, rendered as soft glowing stars */
+  function drawPlaced(t){
+    placed.forEach((p,i)=>{
+      const x = p.nx*W, y = p.ny*H;
+      const pulse = i===hoveredStar ? 1.7 : 1 + 0.15*Math.sin(t*0.002 + i);
+      const r = 4.2*pulse;
+      ctx2d.shadowBlur = i===hoveredStar ? 26 : 12;
+      ctx2d.shadowColor = 'rgba(232,178,90,.9)';
+      ctx2d.fillStyle = 'rgba(255,224,170,.95)';
+      ctx2d.beginPath(); ctx2d.arc(x,y,r,0,Math.PI*2); ctx2d.fill();
+      ctx2d.shadowBlur = 0;
+    });
+  }
+
+  function drawLanternShape(x, y, sway, alpha){
+    ctx2d.save();
+    ctx2d.translate(x,y);
+    ctx2d.rotate(sway*0.12);
+    ctx2d.globalAlpha = alpha;
+    const glow = ctx2d.createRadialGradient(0,0,0,0,0,46);
+    glow.addColorStop(0,'rgba(255,196,110,.55)');
+    glow.addColorStop(1,'rgba(255,196,110,0)');
+    ctx2d.fillStyle = glow;
+    ctx2d.beginPath(); ctx2d.arc(0,0,46,0,Math.PI*2); ctx2d.fill();
+    ctx2d.strokeStyle = 'rgba(255,230,190,.5)';
+    ctx2d.lineWidth = 1;
+    ctx2d.beginPath(); ctx2d.moveTo(0,14); ctx2d.lineTo(0,22); ctx2d.stroke();
+    const bodyGrad = ctx2d.createLinearGradient(0,-14,0,14);
+    bodyGrad.addColorStop(0,'#ffe3ad');
+    bodyGrad.addColorStop(1,'#e8894a');
+    ctx2d.fillStyle = bodyGrad;
+    ctx2d.beginPath();
+    ctx2d.moveTo(-13,-14);
+    ctx2d.quadraticCurveTo(-16,0,-13,14);
+    ctx2d.quadraticCurveTo(0,20,13,14);
+    ctx2d.quadraticCurveTo(16,0,13,-14);
+    ctx2d.quadraticCurveTo(0,-20,-13,-14);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.fillStyle = '#8a5a2e';
+    ctx2d.beginPath(); ctx2d.ellipse(0,-14,13,3,0,0,Math.PI*2); ctx2d.fill();
+    ctx2d.beginPath(); ctx2d.ellipse(0,14,13,3,0,0,Math.PI*2); ctx2d.fill();
+    ctx2d.restore();
+    ctx2d.globalAlpha = 1;
+  }
+
+  function spawnEmbers(x,y){
+    for(let i=0;i<2;i++){
+      embers.push({ x, y, vx:(Math.random()-0.5)*0.4, vy:-0.3-Math.random()*0.5, life:1, r:1+Math.random()*1.6 });
+    }
+  }
+
+  function releaseAt(text){
+    flying.push({
+      text,
+      x: W*(0.42+Math.random()*0.16),
+      y: H*1.02,
+      targetY: H*(0.12+Math.random()*0.35),
+      targetX: W*(0.12+Math.random()*0.76),
+      swayPhase: Math.random()*Math.PI*2,
+      born: performance.now(),
+      dur: 4200+Math.random()*1400
+    });
+    trackGameMove('lantern','hit');
+  }
+
+  function updateFlying(t){
+    for(let i=flying.length-1;i>=0;i--){
+      const f = flying[i];
+      const p = Math.min(1, (performance.now()-f.born)/f.dur);
+      const ease = 1-Math.pow(1-p,3);
+      f.x = f.x + (f.targetX-f.x)*0.012;
+      f.y = (H*1.02) + (f.targetY-(H*1.02))*ease;
+      const sway = Math.sin(t*0.0025 + f.swayPhase);
+      const alpha = p<0.9 ? 1 : 1-((p-0.9)/0.1);
+      drawLanternShape(f.x, f.y, sway, Math.max(0,alpha));
+      if(Math.random()<0.5) spawnEmbers(f.x, f.y+14);
+      if(p>=1){
+        flying.splice(i,1);
+        const nx = f.targetX/W, ny = f.targetY/H;
+        const rec = {text:f.text, time:Date.now(), nx, ny};
+        placed.push(rec);
+        const all = getLanternSky(); all.push(rec); saveLanternSky(all);
+        countEl.textContent = placed.length;
+        chimeSoft();
+        msgEl.textContent = pickLanternLine();
+      }
+    }
+  }
+  function updateEmbers(){
+    for(let i=embers.length-1;i>=0;i--){
+      const e = embers[i];
+      e.x += e.vx; e.y += e.vy; e.vy -= 0.002; e.life -= 0.02;
+      if(e.life<=0){ embers.splice(i,1); continue; }
+      ctx2d.fillStyle = `rgba(255,200,120,${Math.max(0,e.life)})`;
+      ctx2d.beginPath(); ctx2d.arc(e.x,e.y,e.r,0,Math.PI*2); ctx2d.fill();
+    }
+  }
+
+  function chimeSoft(){
+    try{
+      const ctx = getAudioCtx();
+      const notes = [659.25, 783.99, 880.00];
+      notes.forEach((f,i)=>{
+        const o = ctx.createOscillator(); o.type='sine'; o.frequency.value=f;
+        const g = ctx.createGain();
+        const t0 = ctx.currentTime + i*0.09;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(0.05, t0+0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+1.6);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t0); o.stop(t0+1.7);
+      });
+    }catch(e){}
+  }
+
+  const LANTERN_LINES = [
+    "There it goes. You don't have to carry that one right now.",
+    "Look at that — one more little light in your sky.",
+    "That's yours now, floating gently, held but not heavy.",
+    "You get to set it down. That's allowed.",
+    "Your sky is a little fuller, and you're a little lighter."
+  ];
+  function pickLanternLine(){ return LANTERN_LINES[Math.floor(Math.random()*LANTERN_LINES.length)]; }
+
+  function draw(now){
+    const t = now - tStart;
+    ctx2d.clearRect(0,0,W,H);
+    drawAurora(t);
+    drawBgStars(t);
+    drawMoon();
+    drawPlaced(t);
+    updateFlying(t);
+    updateEmbers();
+    raf = requestAnimationFrame(draw);
+  }
+
+  function releaseLantern(){
+    const input = document.getElementById('lanternInput');
+    const text = input.value.trim();
+    if(!text){ toast('Write a word or two first 🕊️'); return; }
+    if(text.length>60){ toast('Keep it short and gentle — under 60 characters'); return; }
+    releaseAt(text);
+    input.value='';
+    hintEl.textContent = '🏮 Watching it rise...';
+    setTimeout(()=>{ hintEl.textContent = '🏮 Write down what you\'re ready to let float away tonight.'; }, 3000);
+  }
+  window.releaseLantern = releaseLantern;
+
+  function starAt(clientX, clientY){
+    const r = canvas.getBoundingClientRect();
+    const x = clientX-r.left, y = clientY-r.top;
+    let best=-1, bd=20*20;
+    placed.forEach((p,i)=>{
+      const dx=p.nx*W-x, dy=p.ny*H-y, d=dx*dx+dy*dy;
+      if(d<bd){ bd=d; best=i; }
+    });
+    return best;
+  }
+  function onCanvasMove(e){
+    hoveredStar = starAt(e.clientX, e.clientY);
+    canvas.style.cursor = hoveredStar>-1 ? 'pointer' : 'default';
+  }
+  function onCanvasClick(e){
+    const idx = starAt(e.clientX, e.clientY);
+    if(idx>-1){
+      const p = placed[idx];
+      showModal(`
+        <h3>🏮 ${new Date(p.time).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})}</h3>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-style:italic;margin:14px 0;">"${escapeHtml(p.text)}"</p>
+        <p style="font-size:.82rem;color:#8a8072;">You let this one go, and it's still gently glowing.</p>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:10px" onclick="closeModal('premiumModal')">Close</button>
+      `);
+    }
+  }
+  canvas.addEventListener('mousemove', onCanvasMove);
+  canvas.addEventListener('click', onCanvasClick);
+
+  stage.querySelector('#lanternClearBtn').addEventListener('click', ()=>{
+    showModal(`
+      <h3>Clear your whole sky?</h3>
+      <p style="opacity:.8;margin-bottom:16px;">This removes every lantern you've released. It can't be undone.</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmClearLanternSky()">Clear it</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeModal('premiumModal')">Keep my sky</button>
+      </div>
+    `);
+  });
+  window.confirmClearLanternSky = function(){
+    placed = [];
+    saveLanternSky([]);
+    countEl.textContent = 0;
+    closeModal('premiumModal');
+    toast('Your sky is clear 🌌');
+  };
+
+  window.addEventListener('resize', resize);
+  resize();
+  raf = requestAnimationFrame(draw);
+
+  gameCleanupFn = ()=>{
+    if(raf) cancelAnimationFrame(raf);
+    raf = null;
+    canvas.removeEventListener('mousemove', onCanvasMove);
+    canvas.removeEventListener('click', onCanvasClick);
+    window.removeEventListener('resize', resize);
+  };
+}
 const SCRAMBLE_WORDS = ['CALM','GRACE','GENTLE','WORTHY','STEADY','SOFT','BRAVE','ENOUGH','KIND','GROWTH'];
 let scrambleAnswer = '', scrambleScoreCount = 0;
 function shuffleWord(w){
@@ -7370,7 +7822,7 @@ function renderStreakUI(){
 /* ---------- hook this into your existing game-end score savers ---------- */
 function awardGameCoins(gameKey, score){
   // simple conversion — tweak rates per game as you like
-  const rates = { bubble: 1, memory: 3, petal: 2, scramble: 5, zen: 0, mandala: 0 };
+  const rates = { bubble: 1, memory: 3, petal: 2, scramble: 5, zen: 0, mandala: 0, stars: 4 };
   const rate = rates[gameKey] ?? 1;
   const earned = Math.max(0, Math.round(score * rate));
   if(earned > 0) addCoins(earned, gameKey+' game');
