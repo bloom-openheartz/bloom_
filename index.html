@@ -1275,15 +1275,15 @@ body.intro-locked{overflow:hidden;height:100vh;}
 .sound-vol span{font-size:.62rem;font-weight:700;color:#8a8072;min-width:28px;}
 </style>
 </head>
-<body><script type="module">
-  const BLOOM_CFG = await fetch('/api/public/config').then(r=>r.json()).catch(()=>({}));
-  window.BLOOM_CFG = BLOOM_CFG;
+<body>
+  <body><script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
   const firebaseConfig = {
-    apiKey: BLOOM_CFG.firebaseApiKey || "",
+    apiKey: "AIzaSyDwnQgl4M3fQF6iWd_9GdgYq-jk9on6Tq4",
     authDomain: "bloom-502919.firebaseapp.com",
     projectId: "bloom-502919",
     storageBucket: "bloom-502919.firebasestorage.app",
@@ -1291,6 +1291,8 @@ import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTim
     appId: "1:694570223930:web:9c752f3f8acf3bc802a803",
     measurementId: "G-X71P8BWN5R"
   };
+
+  window.BLOOM_CFG = { googleClientId: "694570223930-08f00r3abfcaug4v3fs4afsdofqlai3d.apps.googleusercontent.com" };
 
   const app = initializeApp(firebaseConfig);
   try{ getAnalytics(app); }catch(e){ /* analytics is non-essential */ }
