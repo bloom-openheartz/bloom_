@@ -389,8 +389,14 @@ img{max-width:100%;display:block;}
 
 .chat-wrap{display:grid; grid-template-columns:180px 1fr 180px; gap:18px; height:50vh; min-height:340px; max-height:600px; max-width:1000px; margin:0 auto;}
 @media(max-width:1100px){.chat-wrap{max-width:92%;}}
-@media(max-width:900px){.chat-wrap{grid-template-columns:1fr; height:auto; min-height:0; max-height:none; margin:0;}}
-.chat-sidebar,.chat-online{background:#fff; border-radius:20px; padding:18px; overflow-y:auto;}
+.chat-mobile-bar{display:none;}
+@media(max-width:900px){
+  .chat-mobile-bar{display:flex;gap:8px;margin-bottom:12px;justify-content:center;}
+  .chat-wrap{grid-template-columns:1fr; position:relative; height:65vh; min-height:420px; max-height:640px; margin:0;}
+  .chat-sidebar,.chat-online{display:none;position:absolute;top:0;left:0;right:0;z-index:60;max-height:280px;box-shadow:var(--shadow-lift);}
+  .chat-sidebar.mobile-open,.chat-online.mobile-open{display:block;}
+  .chat-main{height:100%;}
+}.chat-sidebar,.chat-online{background:#fff; border-radius:20px; padding:18px; overflow-y:auto;}
 body.evening{--cream:#241c17;--ink:#f5ede4;--petal:#2f2521;}
 body.evening .site-footer{
   background:#1a1410 !important;
@@ -3056,64 +3062,53 @@ const revealObserver = new IntersectionObserver((entries)=>{
 function triggerReveal(){
   document.querySelectorAll('.reveal:not(.in)').forEach(el=>revealObserver.observe(el));
 }
-/* ---------- background music (ambient loop, independent of soundscape) ---------- */
 let bgMusicPlaying = false;
 let bgMusicNodes = null;
-/* soft, peaceful ambient pad: warm detuned Amaj9-ish drone, slow breathing
-   swells and a lazy felt-piano note now and then. Nothing sharp, nothing loud. */
 let bgMusicTimer = null;
 function startBgMusic(){
   const ctx = getAudioCtx();
   const master = ctx.createGain();
   master.gain.setValueAtTime(0.0001, ctx.currentTime);
-  master.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 4); // gentle fade-in
+  master.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 3);
 
-  // take the edge off everything
-  const warm = ctx.createBiquadFilter(); warm.type='lowpass'; warm.frequency.value = 950; warm.Q.value = 0.4;
-  const air  = ctx.createBiquadFilter(); air.type='highshelf'; air.frequency.value = 3500; air.gain.value = -8;
-  master.connect(warm); warm.connect(air); air.connect(ctx.destination);
+  const warm = ctx.createBiquadFilter(); warm.type='lowpass'; warm.frequency.value=2200; warm.Q.value=0.3;
+  master.connect(warm); warm.connect(ctx.destination);
 
-  const nodes = { master, warm, air };
-  // A2 E3 C#4 B4 — open, calm, unresolved
-  const chord = [110.00, 164.81, 277.18, 493.88];
-  chord.forEach((f, i)=>{
-    [-4, 4].forEach((detune, k)=>{
-      const osc = ctx.createOscillator();
-      osc.type = i < 2 ? 'sine' : 'triangle';
-      osc.frequency.value = f;
-      osc.detune.value = detune;
-      const g = ctx.createGain();
-      g.gain.value = (i < 2 ? 0.28 : 0.13) / 2;
-      // each voice breathes at its own slow rate
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.035 + i*0.013 + k*0.004;
-      const lg  = ctx.createGain(); lg.gain.value = g.gain.value * 0.55;
-      lfo.connect(lg); lg.connect(g.gain);
-      osc.connect(g); g.connect(master);
-      osc.start(); lfo.start();
-      nodes['v'+i+'_'+k] = osc; nodes['g'+i+'_'+k] = g;
-      nodes['l'+i+'_'+k] = lfo; nodes['lg'+i+'_'+k] = lg;
-    });
-  });
+  const delay = ctx.createDelay(); delay.delayTime.value = 0.62;
+  const feedback = ctx.createGain(); feedback.gain.value = 0.32;
+  const delayFilter = ctx.createBiquadFilter(); delayFilter.type='lowpass'; delayFilter.frequency.value=1600;
+  delay.connect(feedback); feedback.connect(delayFilter); delayFilter.connect(delay);
+  delay.connect(warm);
 
-  // occasional soft bell note drifting over the pad
-  const notes = [440.00, 554.37, 659.25, 880.00];
-  bgMusicTimer = setInterval(()=>{
+  const padOsc = ctx.createOscillator(); padOsc.type='sine'; padOsc.frequency.value = 130.81;
+  const padGain = ctx.createGain(); padGain.gain.value = 0.035;
+  padOsc.connect(padGain); padGain.connect(warm);
+  padOsc.start();
+
+  bgMusicNodes = { master, warm, delay, feedback, delayFilter, padOsc, padGain };
+
+  const SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+  let prevIdx = 2;
+  function playNote(){
     if(!bgMusicNodes) return;
+    const step = [-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)];
+    prevIdx = Math.max(0, Math.min(SCALE.length-1, prevIdx+step));
+    const freq = SCALE[prevIdx];
     const t = ctx.currentTime + 0.05;
     const osc = ctx.createOscillator(); osc.type='sine';
-    osc.frequency.value = notes[Math.floor(Math.random()*notes.length)];
+    osc.frequency.value = freq;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.028, t + 1.1);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 6);
-    osc.connect(g); g.connect(master);
-    osc.start(t); osc.stop(t + 6.2);
-  }, 9000);
-
-  bgMusicNodes = nodes;
+    g.gain.linearRampToValueAtTime(0.11, t + 1.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.4);
+    osc.connect(g); g.connect(warm); g.connect(delay);
+    osc.start(t); osc.stop(t + 3.6);
+    bgMusicTimer = setTimeout(playNote, 1800 + Math.random()*1600);
+  }
+  playNote();
 }
 function stopBgMusic(){
-  if(bgMusicTimer){ clearInterval(bgMusicTimer); bgMusicTimer = null; }
+  if(bgMusicTimer){ clearTimeout(bgMusicTimer); bgMusicTimer = null; }
   if(!bgMusicNodes) return;
   const ctx = audioCtx;
   const nodes = bgMusicNodes;
@@ -3122,11 +3117,12 @@ function stopBgMusic(){
     const t = ctx.currentTime;
     nodes.master.gain.cancelScheduledValues(t);
     nodes.master.gain.setValueAtTime(Math.max(0.0001, nodes.master.gain.value), t);
-    nodes.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.6); // fade out, never a click
+    nodes.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
   }catch(e){}
   setTimeout(()=>{
-    Object.values(nodes).forEach(n=>{ try{ n.stop && n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} });
-  }, 1800);
+    try{ nodes.padOsc.stop(); }catch(e){}
+    Object.values(nodes).forEach(n=>{ try{ n.disconnect(); }catch(e){} });
+  }, 1400);
 }
 function toggleBgMusic(){
   bgMusicPlaying = !bgMusicPlaying;
@@ -3135,7 +3131,6 @@ function toggleBgMusic(){
   else { stopBgMusic(); toast('Background music off'); }
   renderNavRight();
 }
-
 const AFFIRM_KEYWORDS = {
   low: ['tired','sad','heavy','can\'t','hard day','exhausted','down','crying','hurt'],
   high: ['excited','great','proud','happy','good day','accomplished','confident'],
@@ -3982,6 +3977,10 @@ function persistChat(){ LS.set('bloom_chatState', chatState); }
 
 function pageChat(){
   return `
+  <div class="chat-mobile-bar">
+  <button class="btn btn-ghost" onclick="toggleChatPanel(this,'sidebar')">☰ Groups</button>
+  <button class="btn btn-ghost" onclick="toggleChatPanel(this,'online')">👥 Online</button>
+</div>
   <div class="chat-wrap reveal in">
     <div class="chat-sidebar">
       <h4 style="margin-top:0;">Rooms</h4>
@@ -4093,6 +4092,16 @@ async function saveRoomMsgEdit(room, msgId){
   const { db, doc, updateDoc } = window.BloomFB;
   await updateDoc(doc(db, 'rooms', room, 'messages', msgId), { text, edited: true });
   toast('Message updated');
+}
+function toggleChatPanel(btn, which){
+  const wrap = btn.closest('.chat-mobile-bar').nextElementSibling;
+  if(!wrap) return;
+  const sidebar = wrap.querySelector('.chat-sidebar');
+  const online = wrap.querySelector('.chat-online');
+  const target = which === 'sidebar' ? sidebar : online;
+  const other = which === 'sidebar' ? online : sidebar;
+  if(other) other.classList.remove('mobile-open');
+  if(target) target.classList.toggle('mobile-open');
 }
 function switchRoom(r){ chatState.room=r; persistChat(); initChatIfNeeded(); }
 async function sendMsg(){
@@ -4209,6 +4218,10 @@ async function renderGirlsChatPage(){
 }
 function pageGirlsChat(){
   return `
+  <div class="chat-mobile-bar">
+  <button class="btn btn-ghost" onclick="toggleChatPanel(this,'sidebar')">☰ Groups</button>
+  <button class="btn btn-ghost" onclick="toggleChatPanel(this,'online')">👥 Online</button>
+</div>
   <div class="chat-wrap reveal in">
     <div class="chat-sidebar">
       <h4 style="margin-top:0;">Rooms</h4>
@@ -6397,15 +6410,26 @@ function clearZen(){
 function saveGameScore(key, score){
   try{ DB.set('bloom_gameScore_'+key, score); }catch(e){}
 }function initPetalGame(stage){
-  stage.innerHTML = `<div class="game-topbar"><button class="btn btn-ghost" onclick="closeGame()">← All games</button><span class="game-hud"><span>🌸 Petal Catch</span><span id="petalScore">Score: 0</span><span id="petalTime">⏱ 30s</span><span id="petalBest">Best: ${DB.get('bloom_gameScore_petal',0)}</span></span></div>
+  stage.innerHTML = `<div class="game-topbar"><button class="btn btn-ghost" onclick="closeGame()">← All games</button><span class="game-hud"><span id="petalScore">Score: 0</span><span id="petalTime">⏱ 30s</span><span id="petalBest">Best: ${DB.get('bloom_gameScore_petal',0)}</span></span></div>
     <div class="game-canvas-wrap" id="petalWrap"><div class="petal-basket" id="petalBasketEl" style="font-size:34px;background:none;box-shadow:none;">🧺</div></div>
     <p class="game-msg" id="petalCheer" style="text-align:center;color:var(--terracotta);font-family:'Caveat',cursive;font-size:1.25rem;min-height:28px;margin-top:8px;">Catch the flowers for 30 seconds — every one you catch joins your bouquet 💐</p>
-    <div id="petalBouquet" style="max-width:420px;margin:10px auto 0;background:var(--petal);border-radius:18px;padding:14px 16px 10px;text-align:center;">
-      <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a8072;">Your bouquet</div>
-      <div id="petalBouquetFlowers" style="font-size:26px;line-height:1.15;margin-top:8px;min-height:40px;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:2px;"></div>
-      <div style="font-size:40px;line-height:1;margin-top:-4px;">🧺</div>
-      <div id="petalBouquetNote" style="font-size:12.5px;color:#8a8072;margin-top:4px;">Empty basket — go gather some blooms 🌱</div>
-    </div>
+   <div id="petalBouquet" style="max-width:340px;margin:10px auto 0;text-align:center;">
+  <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a8072;margin-bottom:6px;">Your bouquet</div>
+  <svg viewBox="0 0 220 220" style="width:220px;height:220px;margin:0 auto;display:block;">
+    <defs>
+      <radialGradient id="petalBasketShine" cx="35%" cy="20%" r="70%">
+        <stop offset="0%" stop-color="#e8b878"/><stop offset="100%" stop-color="#c99a5e"/>
+      </radialGradient>
+    </defs>
+    <g id="petalBouquetSvgGroup"></g>
+    <path d="M40 150 Q110 175 180 150 L168 205 Q110 220 52 205 Z" fill="url(#petalBasketShine)"/>
+    <path d="M40 150 Q110 172 180 150 L177 162 Q110 184 43 162 Z" fill="#a5723c"/>
+    <path d="M55 150 Q60 120 60 105" stroke="#8a5a2e" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M165 150 Q160 120 160 105" stroke="#8a5a2e" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M60 105 Q110 85 160 105" stroke="#8a5a2e" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </svg>
+  <div id="petalBouquetNote" style="font-size:12.5px;color:#8a8072;margin-top:2px;">Empty basket — go gather some blooms 🌱</div>
+</div>
     <p style="text-align:center;color:#8a8072;font-size:13px;margin-top:8px;">Move your mouse (or finger) to catch the falling petals!</p>`;
   const wrap = document.getElementById('petalWrap');
   const basket = document.getElementById('petalBasketEl');
@@ -6415,19 +6439,33 @@ function saveGameScore(key, score){
   const bouquet = [];
   const bouquetEl = document.getElementById('petalBouquetFlowers');
   const bouquetNote = document.getElementById('petalBouquetNote');
-  function renderBouquet(){
-    if(!bouquetEl) return;
-    // arrange the caught flowers as a bunch sitting in the basket
-    bouquetEl.innerHTML = bouquet.map((f,i)=>{
-      const tilt = (i % 5 - 2) * 8;
-      const lift = Math.abs(i % 5 - 2) * -4;
-      return `<span style="display:inline-block;transform:rotate(${tilt}deg) translateY(${lift}px);">${f}</span>`;
-    }).join('');
-    if(bouquetNote){
-      bouquetNote.textContent = bouquet.length === 0
-        ? 'Empty basket — go gather some blooms 🌱'
-        : `${bouquet.length} flower${bouquet.length>1?'s':''} in your basket 💐`;
-    }
+  function renderBouquet(){const PETAL_BOUQUET_COLORS = {'🌸':'#f2a6d8','🌺':'#e0607a','🌼':'#f4d35e','🌷':'#e8894a'};{
+  const g = document.getElementById('petalBouquetSvgGroup');
+  const note = document.getElementById('petalBouquetNote');
+  if(!g) return;
+  const shown = bouquet.slice(-40);
+  g.innerHTML = shown.map((emoji, i)=>{
+    const angle = -60 + ((i*37)%100/100)*120;
+    const dist = 30 + ((i*53)%40);
+    const rad = angle * Math.PI/180;
+    const cx = 110 + Math.sin(rad)*dist*0.9;
+    const cy = 95 - Math.cos(rad)*dist*0.6 - (i%5)*3;
+    const scale = 0.75 + ((i*17)%25)/100;
+    const color = PETAL_BOUQUET_COLORS[emoji] || '#e0607a';
+    return `<g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)}) scale(${scale.toFixed(2)})">
+      <ellipse cx="-7" cy="0" rx="7" ry="4.5" fill="${color}" opacity=".9"/>
+      <ellipse cx="7" cy="0" rx="7" ry="4.5" fill="${color}" opacity=".9"/>
+      <ellipse cx="0" cy="-7" rx="4.5" ry="7" fill="${color}" opacity=".9"/>
+      <ellipse cx="0" cy="7" rx="4.5" ry="7" fill="${color}" opacity=".9"/>
+      <circle cx="0" cy="0" r="4.5" fill="#C9963A"/>
+    </g>`;
+  }).join('');
+  if(note){
+    note.textContent = bouquet.length === 0
+      ? 'Empty basket — go gather some blooms 🌱'
+      : `${bouquet.length} flower${bouquet.length>1?'s':''} in your bouquet 💐`;
+  }
+}
   }
   renderBouquet();
 
